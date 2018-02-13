@@ -3507,6 +3507,21 @@ class DAG(BaseDag, LoggingMixin):
 
     @staticmethod
     @provide_session
+    def deactivate_all_dags(session=None):
+        """
+        Deactivate all the existing dags to be in active.
+
+        :param session:
+        :return:
+        """
+        for dag in session.query(
+                DagModel).all():
+            dag.is_active = False
+            session.merge(dag)
+            session.commit()
+
+    @staticmethod
+    @provide_session
     def deactivate_unknown_dags(active_dag_ids, session=None):
         """
         Given a list of known DAGs, deactivate any other DAGs that are
@@ -3516,13 +3531,13 @@ class DAG(BaseDag, LoggingMixin):
         :type active_dag_ids: list[unicode]
         :return: None
         """
-
         if len(active_dag_ids) == 0:
             return
         for dag in session.query(
                 DagModel).filter(~DagModel.dag_id.in_(active_dag_ids)).all():
             dag.is_active = False
             session.merge(dag)
+            session.commit()
 
     @staticmethod
     @provide_session

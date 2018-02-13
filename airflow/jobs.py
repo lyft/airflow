@@ -1365,6 +1365,8 @@ class SchedulerJob(BaseJob):
         self.executor.start()
 
         session = settings.Session()
+        models.DAG.deactivate_all_dags()
+
         self.logger.info("Resetting state for orphaned tasks")
         # grab orphaned tasks and make sure to reset their state
         active_runs = DagRun.find(
@@ -1503,6 +1505,7 @@ class SchedulerJob(BaseJob):
             if processor_manager.get_last_finish_time(file_path) is None:
                 all_files_processed = False
                 break
+
         if all_files_processed:
             self.logger.info("Deactivating DAGs that haven't been touched since {}"
                              .format(execute_start_time.isoformat()))
