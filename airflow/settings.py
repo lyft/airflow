@@ -148,6 +148,11 @@ def configure_orm(disable_connection_pool=False):
     Session = scoped_session(
         sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
+
+def configure_action_logging():
+    pass
+
+
 try:
     from airflow_local_settings import *
     logging.info("Loaded airflow_local_settings.")
@@ -157,6 +162,7 @@ except:
 configure_logging()
 configure_vars()
 configure_orm()
+configure_action_logging()
 
 # Const stuff
 
