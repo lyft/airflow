@@ -56,7 +56,6 @@ from airflow.utils import logging as logging_utils
 from airflow.utils.file import mkdirs
 from airflow.www.app import cached_app
 
-
 from sqlalchemy import func
 from sqlalchemy.orm import exc
 

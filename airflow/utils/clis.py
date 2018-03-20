@@ -61,7 +61,7 @@ def action_logging(f):
                 action_loggers.submit(**metrics)
             except:
                 logging.error("Failed to submit action_logger", exc_info=1)
-                
+
     return wrapper
 
 
