@@ -26,8 +26,6 @@ class DefaultActionLogger:
     A default action logger that behave same as www.utils.action_logging which uses global session
     and pushes log DAO object.
     """
-    def __init__(self):
-        pass
 
     @classmethod
     def submit(cls, **kwargs):

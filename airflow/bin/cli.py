@@ -50,11 +50,12 @@ from airflow.models import (DagModel, DagBag, TaskInstance,
                             DagPickle, DagRun, Variable, DagStat,
                             Pool, Connection)
 from airflow.ti_deps.dep_context import (DepContext, SCHEDULER_DEPS)
+from airflow.utils import clis
 from airflow.utils import db as db_utils
 from airflow.utils import logging as logging_utils
 from airflow.utils.file import mkdirs
 from airflow.www.app import cached_app
-from airflow.utils import clis
+
 
 from sqlalchemy import func
 from sqlalchemy.orm import exc

@@ -16,10 +16,12 @@
 Utilities module for cli
 """
 from __future__ import absolute_import
+
+import logging
 import functools
-from datetime import datetime
-import sys
 import os
+import sys
+from datetime import datetime
 
 import airflow.models
 from airflow.utils import action_loggers
@@ -28,6 +30,19 @@ from airflow.utils import action_loggers
 def action_logging(f):
     """
     Decorates function to execute function at the same time submitting action_logging but in CLI context
+    Also, builds metrics dict and submits action_loggers.
+    In metrics dict:
+        sub_command : name of sub-command
+        start_datetime : start datetime instance by utc
+        end_datetime : end datetime instance by utc
+        full_command : full command line arguments
+        user : current user
+        log : airflow.models.Log DAO instance
+        dag_id : dag id (optional)
+        task_id : task_id (optional)
+        execution_date : execution date (optional)
+        error : exception instance if there's an exception
+
     :param f: function instance
     :return: wrapped function
     """
@@ -36,31 +51,35 @@ def action_logging(f):
         metrics = _build_metrics(f.__name__, *args)
 
         try:
-            result = f(*args, **kwargs)
+            return f(*args, **kwargs)
         except:
             metrics['error'] = sys.exc_info()[1]
+            raise
         finally:
             metrics['end_datetime'] = datetime.utcnow()
             try:
                 action_loggers.submit(**metrics)
-            finally:
-                return result
+            except:
+                logging.error("Failed to submit action_logger", exc_info=1)
+                
     return wrapper
 
 
 def _build_metrics(func_name, *args):
     """
     Builds metrics dict from function args
+    It assumes that function arguments is from airflow.bin.cli module's function and has Namespace instance where
+    it optionally contains "dag_id", "task_id", and "execution_date".
+
     :param func_name: name of function
     :param args: args
     :return: dict with metrics
     """
-    metrics = {'event': func_name}
+    metrics = {'sub_command': func_name}
     metrics['start_datetime'] = datetime.utcnow()
     metrics['full_command'] = str(list(sys.argv))
     metrics['user'] = os.environ.get('USER')
 
-    print "args[0]: {}".format(args[0])
     if args:
         tmp_dic = vars(args[0])
         metrics['dag_id'] = tmp_dic.get('dag_id')

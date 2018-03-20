@@ -150,6 +150,11 @@ def configure_orm(disable_connection_pool=False):
 
 
 def configure_action_logging():
+    """
+    Any additional configuration for airflow.utils.action_loggiers module
+    e.g: Use airflow.utils.action_loggiers.add(action_logger) to register callback for customized action logger.
+    :return: None
+    """
     pass
 
 
