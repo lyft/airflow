@@ -50,7 +50,7 @@ from airflow.models import (DagModel, DagBag, TaskInstance,
                             DagPickle, DagRun, Variable, DagStat,
                             Pool, Connection)
 from airflow.ti_deps.dep_context import (DepContext, SCHEDULER_DEPS)
-from airflow.utils import clis
+from airflow.utils import cli
 from airflow.utils import db as db_utils
 from airflow.utils import logging as logging_utils
 from airflow.utils.file import mkdirs
@@ -128,7 +128,7 @@ def get_dag(args):
     return dagbag.dags[args.dag_id]
 
 
-@clis.action_logging
+@cli.action_logging
 def backfill(args, dag=None):
     logging.basicConfig(
         level=settings.LOGGING_LEVEL,
@@ -169,7 +169,7 @@ def backfill(args, dag=None):
             pool=args.pool)
 
 
-@clis.action_logging
+@cli.action_logging
 def trigger_dag(args):
     """
     Creates a dag run for the specified dag
@@ -188,7 +188,7 @@ def trigger_dag(args):
     logging.info(message)
 
 
-@clis.action_logging
+@cli.action_logging
 def pool(args):
     session = settings.Session()
     if args.get or (args.set and args.set[0]) or args.delete:
@@ -222,7 +222,7 @@ def pool(args):
         print("Pool {} deleted".format(name))
 
 
-@clis.action_logging
+@cli.action_logging
 def variables(args):
 
     if args.get:
@@ -300,12 +300,12 @@ def export_helper(filepath):
     print("{} variables successfully exported to {}".format(len(var_dict), filepath))
 
 
-@clis.action_logging
+@cli.action_logging
 def pause(args, dag=None):
     set_is_paused(True, args, dag)
 
 
-@clis.action_logging
+@cli.action_logging
 def unpause(args, dag=None):
     set_is_paused(False, args, dag)
 
@@ -323,7 +323,7 @@ def set_is_paused(is_paused, args, dag=None):
     print(msg)
 
 
-@clis.action_logging
+@cli.action_logging
 def run(args, dag=None):
     # Disable connection pooling to reduce the # of connections on the DB
     # while it's waiting for the task to finish.
@@ -504,7 +504,7 @@ def run(args, dag=None):
                 'Unsupported remote log location: {}'.format(remote_base))
 
 
-@clis.action_logging
+@cli.action_logging
 def task_failed_deps(args):
     """
     Returns the unmet dependencies for a task instance from the perspective of the
@@ -530,7 +530,7 @@ def task_failed_deps(args):
         print("Task instance dependencies are all met.")
 
 
-@clis.action_logging
+@cli.action_logging
 def task_state(args):
     """
     Returns the state of a TaskInstance at the command line.
@@ -544,7 +544,7 @@ def task_state(args):
     print(ti.current_state())
 
 
-@clis.action_logging
+@cli.action_logging
 def dag_state(args):
     """
     Returns the state of a DagRun at the command line.
@@ -557,7 +557,7 @@ def dag_state(args):
     print(dr[0].state if len(dr) > 0 else None)
 
 
-@clis.action_logging
+@cli.action_logging
 def list_dags(args):
     dagbag = DagBag(process_subdir(args.subdir))
     s = textwrap.dedent("""\n
@@ -572,7 +572,7 @@ def list_dags(args):
         print(dagbag.dagbag_report())
 
 
-@clis.action_logging
+@cli.action_logging
 def list_tasks(args, dag=None):
     dag = dag or get_dag(args)
     if args.tree:
@@ -582,7 +582,7 @@ def list_tasks(args, dag=None):
         print("\n".join(sorted(tasks)))
 
 
-@clis.action_logging
+@cli.action_logging
 def test(args, dag=None):
     dag = dag or get_dag(args)
 
@@ -599,7 +599,7 @@ def test(args, dag=None):
         ti.run(ignore_task_deps=True, ignore_ti_state=True, test_mode=True)
 
 
-@clis.action_logging
+@cli.action_logging
 def render(args):
     dag = get_dag(args)
     task = dag.get_task(task_id=args.task_id)
@@ -614,7 +614,7 @@ def render(args):
         """.format(attr, getattr(task, attr))))
 
 
-@clis.action_logging
+@cli.action_logging
 def clear(args):
     logging.basicConfig(
         level=settings.LOGGING_LEVEL,
@@ -744,7 +744,7 @@ def restart_workers(gunicorn_master_proc, num_workers_expected):
                 start_refresh(gunicorn_master_proc)
 
 
-@clis.action_logging
+@cli.action_logging
 def webserver(args):
     print(settings.HEADER)
 
@@ -866,7 +866,7 @@ def webserver(args):
             monitor_gunicorn(gunicorn_master_proc)
 
 
-@clis.action_logging
+@cli.action_logging
 def scheduler(args):
     print(settings.HEADER)
     job = jobs.SchedulerJob(
@@ -900,7 +900,7 @@ def scheduler(args):
         job.run()
 
 
-@clis.action_logging
+@cli.action_logging
 def serve_logs(args):
     print("Starting flask")
     import flask
@@ -920,7 +920,7 @@ def serve_logs(args):
         host='0.0.0.0', port=WORKER_LOG_SERVER_PORT)
 
 
-@clis.action_logging
+@cli.action_logging
 def worker(args):
     env = os.environ.copy()
     env['AIRFLOW_HOME'] = settings.AIRFLOW_HOME
@@ -966,14 +966,14 @@ def worker(args):
         sp.kill()
 
 
-@clis.action_logging
+@cli.action_logging
 def initdb(args):  # noqa
     print("DB: " + repr(settings.engine.url))
     db_utils.initdb()
     print("Done.")
 
 
-@clis.action_logging
+@cli.action_logging
 def resetdb(args):
     print("DB: " + repr(settings.engine.url))
     if args.yes or input(
@@ -986,7 +986,7 @@ def resetdb(args):
         print("Bail.")
 
 
-@clis.action_logging
+@cli.action_logging
 def upgradedb(args):  # noqa
     print("DB: " + repr(settings.engine.url))
     db_utils.upgradedb()
@@ -1004,12 +1004,12 @@ def upgradedb(args):  # noqa
         session.commit()
 
 
-@clis.action_logging
+@cli.action_logging
 def version(args):  # noqa
     print(settings.HEADER + "  v" + airflow.__version__)
 
 
-@clis.action_logging
+@cli.action_logging
 def connections(args):
     if args.list:
         # Check that no other flags were passed to the command
@@ -1113,7 +1113,7 @@ def connections(args):
         return
 
 
-@clis.action_logging
+@cli.action_logging
 def flower(args):
     broka = conf.get('celery', 'BROKER_URL')
     address = '--address={}'.format(args.hostname)
@@ -1149,7 +1149,7 @@ def flower(args):
         os.execvp("flower", ['flower', '-b', broka, address, port, api, flower_conf])
 
 
-@clis.action_logging
+@cli.action_logging
 def kerberos(args):  # noqa
     print(settings.HEADER)
     import airflow.security.kerberos
