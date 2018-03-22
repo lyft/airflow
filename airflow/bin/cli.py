@@ -39,6 +39,7 @@ import threading
 import traceback
 import time
 import psutil
+import yaml
 
 import airflow
 from airflow import api
@@ -186,6 +187,50 @@ def trigger_dag(args):
         raise AirflowException(err)
 
     logging.info(message)
+
+
+@cli.action_logging
+def pools(args):
+    """
+    set a batch of Airflow pools
+
+    :param args: filepath to airflow pools yaml file
+    :return:
+    """
+    with open(args.filepath, 'r') as stream:
+        try:
+            pools_config = yaml.load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    session = settings.Session()
+    existing_pools = (
+        session.query(Pool)
+        .filter(Pool.pool.in_(pools_config.keys()))
+        .all())
+    for current_pool in existing_pools:
+        pool_slots_and_description = pools_config.get(current_pool.pool)
+        input_pool_slots = pool_slots_and_description.get('slot_counts', 3)
+        input_pool_desc = pool_slots_and_description.get('description', '')
+        if int(input_pool_slots) != int(current_pool.slots) or input_pool_desc != current_pool.description:
+            print("Need to update pool: {}".format(current_pool.pool))
+            print("Original slots: {}\nNew slots: {}".format(current_pool.slots, input_pool_slots))
+            print("Original description: {}\nNew description: {}".format(current_pool.description, input_pool_desc))
+            current_pool.slots = input_pool_slots
+            current_pool.description = input_pool_desc
+        else:
+            print("No need to update pool: {}".format(current_pool.pool))
+        del pools_config[current_pool.pool]
+
+    for pool_name, pool_slots_and_description in pools_config.iteritems():
+        print("Need to add pool: {}".format(pool_name))
+        session.add(
+            Pool(
+                pool=pool_name,
+                slots=int(pool_slots_and_description.get('slot_counts')),
+                description=pool_slots_and_description.get('description'))
+        )
+    session.commit()
 
 
 @cli.action_logging
@@ -1289,6 +1334,10 @@ class CLIFactory(object):
             ("-x", "--delete"),
             metavar="NAME",
             help="Delete a pool"),
+        # pools
+        'airflow_pool_yaml_filepath': Arg(
+            ("-f", "--filepath"),
+            help="Set airflow pools based on yaml configuration"),
         # variables
         'set': Arg(
             ("-s", "--set"),
@@ -1529,6 +1578,10 @@ class CLIFactory(object):
             'func': pool,
             'help': "CRUD operations on pools",
             "args": ('pool_set', 'pool_get', 'pool_delete'),
+        }, {
+            'func': pools,
+            'help': "CRUD operations on a batch of pools",
+            "args": ('airflow_pool_yaml_filepath',),
         }, {
             'func': variables,
             'help': "CRUD operations on variables",
