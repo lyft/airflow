@@ -24,6 +24,7 @@ class TriggerRule(object):
     ONE_SUCCESS = 'one_success'
     ONE_FAILED = 'one_failed'
     DUMMY = 'dummy'
+    _ALL_TRIGGER_RULES = {}
 
     @classmethod
     def is_valid(cls, trigger_rule):
@@ -31,6 +32,10 @@ class TriggerRule(object):
 
     @classmethod
     def all_triggers(cls):
-        return [getattr(cls, attr)
+        if not cls._ALL_TRIGGER_RULES:
+            cls._ALL_TRIGGER_RULES = {
+                getattr(cls, attr)
                 for attr in dir(cls)
-                if not attr.startswith("__") and not callable(getattr(cls, attr))]
+                if not attr.startswith("_") and not callable(getattr(cls, attr))
+            }
+        return cls._ALL_TRIGGER_RULES
