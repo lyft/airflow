@@ -130,7 +130,7 @@ doc = [
     'Sphinx-PyPI-upload>=0.2.1'
 ]
 docker = ['docker-py>=1.6.0']
-druid = ['pydruid>=0.2.1']
+druid = ['pydruid==0.4.1']
 emr = ['boto3>=1.0.0']
 gcp_api = [
     'httplib2',
