@@ -54,12 +54,12 @@ class DruidHook(BaseHook):
             conn.extra_dejson.get('endpoint', ''))
 
     @property
-    def ingest_post_url(self):
+    def ingest_post_url(self, protocol='http'):
         conn = self.get_connection(self.druid_ingest_conn_id)
         host = conn.host
         port = conn.port
         endpoint = conn.extra_dejson.get('endpoint', '')
-        return "http://{host}:{port}/{endpoint}".format(**locals())
+        return "{protocol}://{host}:{port}/{endpoint}".format(**locals())
 
     def get_ingest_status_url(self, task_id):
         post_url = self.ingest_post_url
