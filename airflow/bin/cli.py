@@ -55,6 +55,7 @@ from airflow.utils import cli
 from airflow.utils import db as db_utils
 from airflow.utils import logging as logging_utils
 from airflow.utils.file import mkdirs
+from airflow.utils.dates import cron_presets
 from airflow.www.app import cached_app
 
 from sqlalchemy import func
@@ -143,6 +144,15 @@ def backfill(args, dag=None):
     # If only one date is passed, using same as start and end
     args.end_date = args.end_date or args.start_date
     args.start_date = args.start_date or args.end_date
+
+    schedule_interval = args.schedule_interval
+    if schedule_interval in cron_presets:
+        schedule_interval = cron_presets.get(schedule_interval)
+    elif schedule_interval == '@once':
+        schedule_interval = None
+
+    if schedule_interval:
+        dag.schedule_interval = schedule_interval
 
     if args.task_regex:
         dag = dag.sub_dag(
@@ -1302,6 +1312,10 @@ class CLIFactory(object):
                 "DO respect depends_on_past)."),
             "store_true"),
         'pool': Arg(("--pool",), "Resource pool to use"),
+        'schedule_interval': Arg(
+            ("--schedule_interval",),
+            help=("Override the schedule_interval specified in the DAG. "
+                  "support cron job format and cron presets such as @hourly, @daily, @weekly, @monthly and @yearly ")),
         # list_tasks
         'tree': Arg(("-t", "--tree"), "Tree view", "store_true"),
         # list_dags
@@ -1560,7 +1574,7 @@ class CLIFactory(object):
                 'dag_id', 'task_regex', 'start_date', 'end_date',
                 'mark_success', 'local', 'donot_pickle', 'include_adhoc',
                 'bf_ignore_dependencies', 'bf_ignore_first_depends_on_past',
-                'subdir', 'pool', 'dry_run')
+                'subdir', 'pool', 'dry_run', 'schedule_interval')
         }, {
             'func': list_tasks,
             'help': "List the tasks within a DAG",

@@ -2207,7 +2207,7 @@ class BaseOperator(object):
         schedule_interval as it may not be attached to a DAG.
         """
         if self.has_dag():
-            return self.dag._schedule_interval
+            return self.dag.schedule_interval
         else:
             return self._schedule_interval
 
@@ -2741,11 +2741,11 @@ class DAG(BaseDag, LoggingMixin):
         self.end_date = end_date
         self.schedule_interval = schedule_interval
         if schedule_interval in cron_presets:
-            self._schedule_interval = cron_presets.get(schedule_interval)
+            self.schedule_interval = cron_presets.get(schedule_interval)
         elif schedule_interval == '@once':
-            self._schedule_interval = None
+            self.schedule_interval = None
         else:
-            self._schedule_interval = schedule_interval
+            self.schedule_interval = schedule_interval
         if isinstance(template_searchpath, six.string_types):
             template_searchpath = [template_searchpath]
         self.template_searchpath = template_searchpath
@@ -2823,21 +2823,21 @@ class DAG(BaseDag, LoggingMixin):
             end_date = None
         return utils_date_range(
             start_date=start_date, end_date=end_date,
-            num=num, delta=self._schedule_interval)
+            num=num, delta=self.schedule_interval)
 
     def following_schedule(self, dttm):
-        if isinstance(self._schedule_interval, six.string_types):
-            cron = croniter(self._schedule_interval, dttm)
+        if isinstance(self.schedule_interval, six.string_types):
+            cron = croniter(self.schedule_interval, dttm)
             return cron.get_next(datetime)
-        elif isinstance(self._schedule_interval, timedelta):
-            return dttm + self._schedule_interval
+        elif isinstance(self.schedule_interval, timedelta):
+            return dttm + self.schedule_interval
 
     def previous_schedule(self, dttm):
-        if isinstance(self._schedule_interval, six.string_types):
-            cron = croniter(self._schedule_interval, dttm)
+        if isinstance(self.schedule_interval, six.string_types):
+            cron = croniter(self.schedule_interval, dttm)
             return cron.get_prev(datetime)
-        elif isinstance(self._schedule_interval, timedelta):
-            return dttm - self._schedule_interval
+        elif isinstance(self.schedule_interval, timedelta):
+            return dttm - self.schedule_interval
 
     def normalize_schedule(self, dttm):
         """
