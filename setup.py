@@ -168,6 +168,7 @@ github_enterprise = ['Flask-OAuthlib>=0.9.1']
 google_authentication = ['Flask-OAuthlib>=0.9.1', 'PyJWT>=1.5.3']
 qds = ['qds-sdk>=1.9.6']
 cloudant = ['cloudant>=0.5.9,<2.0'] # major update coming soon, clamp to 0.x
+lyft_logging = ['lyft_logging>=0.4.3']
 
 all_dbs = postgres + mysql + hive + mssql + hdfs + vertica + cloudant
 devel = [
@@ -267,6 +268,7 @@ def do_setup():
             'vertica': vertica,
             'webhdfs': webhdfs,
             'jira': jira,
+            'lyft_logging': lyft_logging,
         },
         classifiers=[
             'Development Status :: 5 - Production/Stable',
@@ -288,6 +290,10 @@ def do_setup():
             'test': Tox,
             'extra_clean': CleanCommand,
         },
+        dependency_links=[
+            'https://www.python.org/pypi/',
+            'https://pypi.lyft.net/pypi/'
+        ],
     )
 
 
