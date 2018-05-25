@@ -290,7 +290,7 @@ def get_chart_height(dag):
     """
     return 600 + len(dag.tasks) * 10
 
-class Airflow(BaseView):
+class Airflow(LoggingMixin, BaseView):
 
     def is_visible(self):
         return False
@@ -1010,6 +1010,8 @@ class Airflow(BaseView):
     @wwwutils.action_logging
     @wwwutils.notify_owner
     def clear(self):
+        user = current_user.user
+
         dag_id = request.args.get('dag_id')
         task_id = request.args.get('task_id')
         origin = request.args.get('origin')
@@ -1038,6 +1040,12 @@ class Airflow(BaseView):
                 include_subdags=recursive)
 
             flash("{0} task instances have been cleared".format(count))
+
+            self.logger.info(("user: {user}, dag_id: {dag_id}, task_id: {task_id}, "
+                              "start_date: {start_date}, end_date: {end_date}, "
+                              "category: ui, action: clear task instance")
+                             .format(user=user, dag_id=dag_id, task_id=task_id,
+                                     start_date=start_date, end_date=end_date))
             return redirect(origin)
         else:
             tis = dag.clear(
@@ -1088,6 +1096,8 @@ class Airflow(BaseView):
     @wwwutils.action_logging
     @wwwutils.notify_owner
     def success(self):
+        user = current_user.user
+
         dag_id = request.args.get('dag_id')
         task_id = request.args.get('task_id')
         origin = request.args.get('origin')
@@ -1120,6 +1130,14 @@ class Airflow(BaseView):
                                 commit=True)
 
             flash("Marked success on {} task instances".format(len(altered)))
+
+            self.logger.info(("user: {user}, dag_id: {dag_id}, task_id: {task_id}, "
+                              "execution_date: {execution_date}, upstream: {upstream}, "
+                              "downstream: {downstream}, future: {future}, past: {past}, "
+                              "category: ui, action: mark task success")
+                             .format(user=user, dag_id=dag_id, task_id=task_id,
+                                     execution_date=execution_date, upstream=upstream,
+                                     downstream=downstream, future=future, past=past))
             return redirect(origin)
 
         to_be_altered = set_state(task=task, execution_date=execution_date,
@@ -1616,6 +1634,8 @@ class Airflow(BaseView):
     @login_required
     @wwwutils.action_logging
     def paused(self):
+        user = current_user.user
+
         DagModel = models.DagModel
         dag_id = request.args.get('dag_id')
         session = settings.Session()
@@ -1628,6 +1648,10 @@ class Airflow(BaseView):
         session.merge(orm_dag)
         session.commit()
         session.close()
+
+        action = 'turn off dag' if request.args.get('is_paused') == 'false' else 'turn on dag'
+        self.logger.info("user: {user}, dag_id: {dag_id}, category: ui, action: {action}"
+                         .format(user=user, dag_id=dag_id, action=action))
 
         dagbag.get_dag(dag_id)
         return "OK"
