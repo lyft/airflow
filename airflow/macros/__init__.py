@@ -16,6 +16,7 @@ from __future__ import absolute_import
 from random import random
 from datetime import datetime, timedelta
 import dateutil
+import os
 import time
 from . import hive
 import uuid
@@ -86,3 +87,32 @@ def _integrate_plugins():
                     "import from 'airflow.macros.[plugin_module]' "
                     "instead. Support for direct imports will be dropped "
                     "entirely in Airflow 2.0.".format(i=macro_name))
+
+
+def s3_location(schema, table, is_dest=True):
+    """
+    Return a s3 location based on schema and table name if it is in production or local file location.
+
+    @param str schema: Database name
+    @param str table: Table name
+    @param bool is_dest: the table is a destination table(true) or intermediate table(false).
+    @return: a string which represents the s3 location of the table if it runs in production,
+             or location file location
+    """
+    env = os.environ.get('SERVICE_INSTANCE', 'development').upper()
+    if env.lower() == 'development':
+        return 'file:/tmp/hive-warehouse/' \
+               'PRODUCTION/{schema}/{table}'.format(schema=schema,
+                                                    table=table)
+    else:
+        if is_dest:
+            # Destination table in production
+            return 's3://lyftqubole-iad/qubole/t/stfihs/' \
+                   'PRODUCTION/{schema}/table_name={table}'.format(schema=schema,
+                                                                   table=table)
+        else:
+            # append ds_nodash for intermediate table
+            return 's3://lyftqubole-iad/qubole/t/stfihs/' \
+                   'PRODUCTION/{schema}/' \
+                   'table_name={table}_{{ ds_nodash }}'.format(schema=schema,
+                                                               table=table)
