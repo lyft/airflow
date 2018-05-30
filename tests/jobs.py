@@ -25,7 +25,7 @@ import shutil
 import unittest
 import six
 import socket
-from tempfile import mkdtemp
+from tempfile import mkdtemp, NamedTemporaryFile
 
 from airflow import AirflowException, settings, models
 from airflow.bin import cli
@@ -169,6 +169,32 @@ class BackfillJobTest(unittest.TestCase):
                 end_date=DEFAULT_DATE,
                 ignore_first_depends_on_past=True)
             job.run()
+
+    def test_backfill_update_params(self):
+        tf = NamedTemporaryFile()
+        try:
+            dag = self.dagbag.get_dag('test_update_params')
+            dag.clear()
+
+            executor = SequentialExecutor()
+
+            expected = "successfull"
+            job = BackfillJob(
+                dag=dag,
+                executor=executor,
+                start_date=DEFAULT_DATE,
+                end_date=DEFAULT_DATE,
+                conf={"override": expected, "file_name": tf.name},
+            )
+
+            job.run()
+
+            with open(tf.name) as fd:
+                actual = fd.read().strip('\n')
+
+            self.assertEqual(expected, actual)
+        finally:
+            tf.close()
 
     def test_backfill_conf(self):
         dag = DAG(

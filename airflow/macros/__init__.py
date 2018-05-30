@@ -86,3 +86,43 @@ def _integrate_plugins():
                     "import from 'airflow.macros.[plugin_module]' "
                     "instead. Support for direct imports will be dropped "
                     "entirely in Airflow 2.0.".format(i=macro_name))
+
+
+def update_params(params, dag_run):
+    """
+    Update the dictionary {{ params }} by {{ dag_run.conf }}.
+
+    You should put the following line to all the templated areas that you want to
+    update {{ params }} by {{ dag_run.conf }}.
+    {% set params = macros.lyft.update_params(params, dag_run) %}
+
+    You are given a BashOperator like the following:
+
+    templated_command = "{% set params = macros.lyft.update_params(params, dag_run) %}"
+                      + "echo "text = {{ params.text }}"
+    bash_operator = BashOperator(
+        task_id='bash_task',
+        bash_command=templated_command,
+        dag=dag,
+        params= {
+            "text": "something we should overwrite."
+        })
+
+    In the daily processing it will print:
+    something we should overwrite.
+
+    But if you run
+    airflow backfill -c '{"text": "override success"}' or
+    airflow trigger_dag -c '{"text": "override success"}'
+
+    it will print:
+    override success
+
+    :param params: a dictionary of user-defined variables
+    :param dag_run: DagRun object
+    :return: params updated by dag_run
+    """
+
+    if dag_run and dag_run.conf:
+        params.update(dag_run.conf)
+    return params
