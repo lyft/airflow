@@ -71,6 +71,33 @@ class PythonOperator(BaseOperator):
         if templates_exts:
             self.template_ext = templates_exts
 
+    def __deepcopy__(self, memo):
+        """
+        Hack sorting double chained task lists by task_id to avoid hitting
+        max_depth on deepcopy operations.
+        """
+        sys.setrecursionlimit(5000)  # TODO fix this in a better way
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+
+        for k, v in list(self.__dict__.items()):
+            if k not in ('user_defined_macros', 'user_defined_filters',
+                         'params', '_log', 'python_callable'):
+                setattr(result, k, copy.deepcopy(v, memo))
+        result.params = self.params
+        if hasattr(self, 'user_defined_macros'):
+            result.user_defined_macros = self.user_defined_macros
+        if hasattr(self, 'user_defined_filters'):
+            result.user_defined_filters = self.user_defined_filters
+        if hasattr(self, '_log'):
+            result._log = self._log
+        if hasattr(self, 'python_callable'):
+            # don't deep copy for python_callable
+            # e.g protobuf doesn't allow deepcopy if it is called inside the callable.
+            result.python_callable = self.python_callable
+        return result
+
     def execute(self, context):
         if self.provide_context:
             context.update(self.op_kwargs)
