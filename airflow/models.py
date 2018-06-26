@@ -1718,12 +1718,12 @@ class TaskInstance(Base, LoggingMixin):
     def get_redirect_url(self, dttm, redirect_to):
         """
         For an operator, gets the URL that the external links specified in
-        `external_links` should point to.
+        `extra_links` should point to.
         :raise ValueError: The error message of a ValueError will be passed on through to
             the fronted to show up as a tooltip on the disabled link
         :param dttm: The datetime parsed exectution date for the URL being searched for
         :param redirect_to: The name of the link we're looking for the URL for. Should be
-            one of the options specified in `external_links`
+            one of the options specified in `extra_links`
         :return: A URL
         """
         pass
