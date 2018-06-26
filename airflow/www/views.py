@@ -1742,10 +1742,10 @@ class Airflow(BaseView):
             root=root,
         )
 
-    @expose('/redirect')
+    @expose('/get_link')
     @login_required
     @wwwutils.action_logging
-    def redirect(self):
+    def get_link(self):
         """
         A restful endpoint that returns external links for a given Operator
 
@@ -1760,9 +1760,7 @@ class Airflow(BaseView):
 
         Returns:
             200: {url: <url of link>, error: None} - returned when there was no problem
-                finding the URL, and the URL is whitelisted
-            403: {url: None, error: <error message>} - returned when the URL is not
-                whitelisted
+                finding the URL
             404: {url: None, error: <error message>} - returned when the operator does
                 not return a URL
         """
@@ -1796,22 +1794,13 @@ class Airflow(BaseView):
             response.status_code = 404
             return response
         if url:
-            allowed_domains = conf.get('webserver', 'whitelisted_domains')
             parsed_uri = urlparse(url)
             domain = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
-            if domain in allowed_domains:
-                response = jsonify({'error': None,
-                                    'url': url})
-                response.status_code = 200
-                print(response)
-                return response
-            else:
-                response = jsonify(
-                    {'url': None,
-                     'error': ('{url} is not whitelisted. '
-                               'Linking is forbidden').format(url=domain)})
-                response.status_code = 403
-                return response
+            response = jsonify({'error': None,
+                                'url': url})
+            response.status_code = 200
+            print(response)
+            return response
         else:
             response = jsonify(
                 {'url': None,

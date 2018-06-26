@@ -93,7 +93,7 @@ class TestPoolModelView(unittest.TestCase):
 class TestRedirect(unittest.TestCase):
     def setUp(self):
         configuration.load_test_config()
-        self.ENDPOINT = '/admin/airflow/redirect'
+        self.ENDPOINT = '/admin/airflow/get_link'
         self.DEFAULT_DATE = datetime(2017, 1, 1)
         self.app = application.create_app().test_client()
 
@@ -115,7 +115,6 @@ class TestRedirect(unittest.TestCase):
     def test_redirect_method_whitelisted(self, get_dag_function):
         get_dag_function.return_value = self.dag
 
-        configuration.set('webserver', 'whitelisted_domains', 'http://www.example.com')
         response = self.app.get(
             "{0}?dag_id={1}&task_id={2}&execution_date={3}&redirect_to=foo-bar"
             .format(self.ENDPOINT, self.dag.dag_id, self.task.task_id, self.DEFAULT_DATE),
@@ -164,23 +163,6 @@ class TestRedirect(unittest.TestCase):
         self.assertEqual(json.loads(response_str), {
             'url': None,
             'error': 'No URL found for no_response'})
-
-    @mock.patch('airflow.www.views.dagbag.get_dag')
-    def test_redirect_not_whitelisted(self, get_dag_function):
-        get_dag_function.return_value = self.dag
-
-        configuration.set('webserver', 'whitelisted_domains', '')
-        response = self.app.get(
-            "{0}?dag_id={1}&task_id={2}&execution_date={3}&redirect_to=foo-bar"
-            .format(self.ENDPOINT, self.dag.dag_id, self.task.task_id, self.DEFAULT_DATE))
-
-        self.assertEqual(response.status_code, 403)
-        response_str = response.data
-        if isinstance(response.data, bytes):
-            response_str = response_str.decode()
-        self.assertEqual(json.loads(response_str), {
-            'url': None,
-            'error': 'http://www.example.com is not whitelisted. Linking is forbidden'})
 
 
 if __name__ == '__main__':
