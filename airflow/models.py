@@ -1963,6 +1963,8 @@ class BaseOperator(object):
     template_fields = []
     # Defines wich files extensions to look for in the templated fields
     template_ext = []
+    # Defines the extra buttons to display in the task instance model view
+    extra_links = []
     # Defines the color in the UI
     ui_color = '#fff'
     ui_fgcolor = '#000'

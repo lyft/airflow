@@ -276,6 +276,7 @@ function updateQueryStringParameter(uri, key, value) {
                   "&execution_date=" + encodeURIComponent(execution_date) +
                   "&redirect_to=" + encodeURIComponent(link);
 
+          link = link.replace(' ', '_');
           var a = '<span class="tool-tip" data-toggle="tooltip" style="padding-right: 1px; padding-left: 1px" data-placement="top" ' +
                   'title="link not yet available" id="tooltip-' + link +'">' +
                     '<a id="link-' + link +'" href="#" data-toggle="tooltip" class="btn btn-primary disabled" target="_blank">' + link + '</a>' +
