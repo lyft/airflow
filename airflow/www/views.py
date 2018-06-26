@@ -24,6 +24,7 @@ import dateutil.parser
 import copy
 import math
 import json
+import pendulum
 
 import inspect
 from textwrap import dedent
@@ -1769,7 +1770,7 @@ class Airflow(BaseView):
         task_id = request.args.get('task_id')
         execution_date = request.args.get('execution_date')
         redirect_to = request.args.get('redirect_to')
-        dttm = airflow.utils.timezone.parse(execution_date)
+        dttm = pendulum.parse(execution_date)
         dag = dagbag.get_dag(dag_id)
 
         if not dag or task_id not in dag.task_ids:

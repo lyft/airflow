@@ -169,6 +169,7 @@ class TestRedirect(unittest.TestCase):
     def test_redirect_not_whitelisted(self, get_dag_function):
         get_dag_function.return_value = self.dag
 
+        configuration.set('webserver', 'whitelisted_domains', '')
         response = self.app.get(
             "{0}?dag_id={1}&task_id={2}&execution_date={3}&redirect_to=foo-bar"
             .format(self.ENDPOINT, self.dag.dag_id, self.task.task_id, self.DEFAULT_DATE))
