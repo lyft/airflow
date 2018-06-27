@@ -93,7 +93,7 @@ class TestPoolModelView(unittest.TestCase):
 class TestRedirect(unittest.TestCase):
     def setUp(self):
         configuration.load_test_config()
-        self.ENDPOINT = '/admin/airflow/get_extra_links'
+        self.ENDPOINT = '/admin/airflow/extra_links'
         self.DEFAULT_DATE = datetime(2017, 1, 1)
         self.app = application.create_app().test_client()
 

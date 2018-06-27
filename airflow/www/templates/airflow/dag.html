@@ -270,7 +270,7 @@ function updateQueryStringParameter(uri, key, value) {
         var markupArr = [];
 
         $.each(extra_links, function(i, link){
-          var url = "{{ url_for('airflow.get_extra_links') }}" +
+          var url = "{{ url_for('airflow.extra_links') }}" +
                   "?task_id=" + encodeURIComponent(task_id) +
                   "&dag_id=" + encodeURIComponent(dag_id) +
                   "&execution_date=" + encodeURIComponent(execution_date) +

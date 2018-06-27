@@ -1742,10 +1742,10 @@ class Airflow(BaseView):
             root=root,
         )
 
-    @expose('/get_extra_links')
+    @expose('/extra_links')
     @login_required
     @wwwutils.action_logging
-    def get_extra_links(self):
+    def extra_links(self):
         """
         A restful endpoint that returns external links for a given Operator
 
