@@ -270,7 +270,7 @@ function updateQueryStringParameter(uri, key, value) {
         var markupArr = [];
 
         $.each(extra_links, function(i, link){
-          var url = "{{ url_for('airflow.get_link') }}" +
+          var url = "{{ url_for('airflow.get_extra_links') }}" +
                   "?task_id=" + encodeURIComponent(task_id) +
                   "&dag_id=" + encodeURIComponent(dag_id) +
                   "&execution_date=" + encodeURIComponent(execution_date) +
@@ -291,7 +291,6 @@ function updateQueryStringParameter(uri, key, value) {
                $("#tooltip-" + link).tooltip('disable');
              },
              error:  function (data) {
-               console.log(data['responseJSON']['error']);
                var link_tooltip = $("#tooltip-" + link);
                link_tooltip.tooltip('hide').attr('title', data['responseJSON']['error']).tooltip('fixTitle');
              }

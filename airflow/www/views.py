@@ -1742,10 +1742,10 @@ class Airflow(BaseView):
             root=root,
         )
 
-    @expose('/get_link')
+    @expose('/get_extra_links')
     @login_required
     @wwwutils.action_logging
-    def get_link(self):
+    def get_extra_links(self):
         """
         A restful endpoint that returns external links for a given Operator
 
@@ -1786,20 +1786,17 @@ class Airflow(BaseView):
                 break
 
         try:
-            url = task.get_redirect_url(dttm, redirect_to)
+            url = task.get_extra_links(dttm, redirect_to)
+            print(url)
         except ValueError as err:
-            print(err)
             response = jsonify({'url': None,
                                 'error': str(err)})
             response.status_code = 404
             return response
         if url:
-            parsed_uri = urlparse(url)
-            domain = '{uri.scheme}://{uri.netloc}'.format(uri=parsed_uri)
             response = jsonify({'error': None,
                                 'url': url})
             response.status_code = 200
-            print(response)
             return response
         else:
             response = jsonify(

@@ -1715,19 +1715,6 @@ class TaskInstance(Base, LoggingMixin):
         else:
             return pull_fn(task_id=task_ids)
 
-    def get_redirect_url(self, dttm, redirect_to):
-        """
-        For an operator, gets the URL that the external links specified in
-        `extra_links` should point to.
-        :raise ValueError: The error message of a ValueError will be passed on through to
-            the fronted to show up as a tooltip on the disabled link
-        :param dttm: The datetime parsed exectution date for the URL being searched for
-        :param redirect_to: The name of the link we're looking for the URL for. Should be
-            one of the options specified in `extra_links`
-        :return: A URL
-        """
-        pass
-
 
 class TaskFail(Base):
     """
@@ -2607,6 +2594,18 @@ class BaseOperator(object):
             dag_id=dag_id,
             include_prior_dates=include_prior_dates)
 
+    def get_extra_links(self, dttm, redirect_to):
+        """
+        For an operator, gets the URL that the external links specified in
+        `extra_links` should point to.
+        :raise ValueError: The error message of a ValueError will be passed on through to
+            the fronted to show up as a tooltip on the disabled link
+        :param dttm: The datetime parsed execution date for the URL being searched for
+        :param redirect_to: The name of the link we're looking for the URL for. Should be
+            one of the options specified in `extra_links`
+        :return: A URL
+        """
+        pass
 
 class DagModel(Base):
 

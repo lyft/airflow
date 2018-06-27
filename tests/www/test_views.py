@@ -93,14 +93,14 @@ class TestPoolModelView(unittest.TestCase):
 class TestRedirect(unittest.TestCase):
     def setUp(self):
         configuration.load_test_config()
-        self.ENDPOINT = '/admin/airflow/get_link'
+        self.ENDPOINT = '/admin/airflow/get_extra_links'
         self.DEFAULT_DATE = datetime(2017, 1, 1)
         self.app = application.create_app().test_client()
 
         class DummyTestOperator(BaseOperator):
             extra_links = ['foo-bar']
 
-            def get_redirect_url(self, ddtm, redirect_to):
+            def get_extra_links(self, ddtm, redirect_to):
                 if redirect_to == 'raise_error':
                     raise ValueError('This is an error')
                 if redirect_to == 'no_response':
@@ -112,7 +112,7 @@ class TestRedirect(unittest.TestCase):
         self.task = DummyTestOperator(task_id="some_dummy_task", dag=self.dag)
 
     @mock.patch('airflow.www.views.dagbag.get_dag')
-    def test_redirect_method_whitelisted(self, get_dag_function):
+    def test_extra_links_works(self, get_dag_function):
         get_dag_function.return_value = self.dag
 
         response = self.app.get(
@@ -131,7 +131,7 @@ class TestRedirect(unittest.TestCase):
         })
 
     @mock.patch('airflow.www.views.dagbag.get_dag')
-    def test_redirect_method_error_raised(self, get_dag_function):
+    def test_extra_links_error_raised(self, get_dag_function):
         get_dag_function.return_value = self.dag
 
         response = self.app.get(
@@ -148,7 +148,7 @@ class TestRedirect(unittest.TestCase):
             'error': 'This is an error'})
 
     @mock.patch('airflow.www.views.dagbag.get_dag')
-    def test_redirect_method_no_response(self, get_dag_function):
+    def test_extra_links_no_response(self, get_dag_function):
         get_dag_function.return_value = self.dag
 
         response = self.app.get(

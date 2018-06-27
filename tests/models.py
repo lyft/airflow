@@ -295,7 +295,7 @@ class DagTest(unittest.TestCase):
         """
         task = DummyOperator(task_id="some_dummy_task")
         self.assertEqual(task.extra_links, [])
-        self.assertEqual(task.get_redirect_url(DEFAULT_DATE, 'foo-bar'), None)
+        self.assertEqual(task.get_extra_links(DEFAULT_DATE, 'foo-bar'), None)
 
     def test_extra_links(self):
         """
@@ -304,12 +304,12 @@ class DagTest(unittest.TestCase):
         class DummyTestOperator(BaseOperator):
             extra_links = ['foo-bar']
 
-            def get_redirect_url(self, ddtm, redirect_to):
+            def get_extra_links(self, ddtm, redirect_to):
                 return('www.foo-bar.com')
 
         task = DummyTestOperator(task_id="some_dummy_task")
         self.assertEqual(task.extra_links, ['foo-bar'])
-        self.assertEqual(task.get_redirect_url(DEFAULT_DATE, 'foo-bar'),
+        self.assertEqual(task.get_extra_links(DEFAULT_DATE, 'foo-bar'),
                          'www.foo-bar.com')
 
 
