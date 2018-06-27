@@ -1787,7 +1787,6 @@ class Airflow(BaseView):
 
         try:
             url = task.get_extra_links(dttm, redirect_to)
-            print(url)
         except ValueError as err:
             response = jsonify({'url': None,
                                 'error': str(err)})
