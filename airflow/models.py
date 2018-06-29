@@ -2594,14 +2594,14 @@ class BaseOperator(object):
             dag_id=dag_id,
             include_prior_dates=include_prior_dates)
 
-    def get_extra_links(self, dttm, redirect_to):
+    def get_extra_links(self, dttm, link_name):
         """
         For an operator, gets the URL that the external links specified in
         `extra_links` should point to.
         :raise ValueError: The error message of a ValueError will be passed on through to
             the fronted to show up as a tooltip on the disabled link
         :param dttm: The datetime parsed execution date for the URL being searched for
-        :param redirect_to: The name of the link we're looking for the URL for. Should be
+        :param link_name: The name of the link we're looking for the URL for. Should be
             one of the options specified in `extra_links`
         :return: A URL
         """

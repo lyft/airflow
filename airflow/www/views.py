@@ -1756,7 +1756,7 @@ class Airflow(BaseView):
         Args: dag_id: The id of the dag containing the task in question
               task_id: The id of the task in question
               execution_date: The date of execution of the task
-              redirect_to: The name of the link reference to find the actual URL for
+              link_name: The name of the link reference to find the actual URL for
 
         Returns:
             200: {url: <url of link>, error: None} - returned when there was no problem
@@ -1767,7 +1767,7 @@ class Airflow(BaseView):
         dag_id = request.args.get('dag_id')
         task_id = request.args.get('task_id')
         execution_date = request.args.get('execution_date')
-        redirect_to = request.args.get('redirect_to')
+        link_name = request.args.get('link_name')
         dttm = pendulum.parse(execution_date)
         dag = dagbag.get_dag(dag_id)
 
@@ -1784,7 +1784,7 @@ class Airflow(BaseView):
         task = dag.get_task(task_id)
 
         try:
-            url = task.get_extra_links(dttm, redirect_to)
+            url = task.get_extra_links(dttm, link_name)
         except ValueError as err:
             response = jsonify({'url': None, 'error': str(err)})
             response.status_code = 404
@@ -1795,7 +1795,7 @@ class Airflow(BaseView):
             return response
         else:
             response = jsonify(
-                {'url': None, 'error': 'No URL found for {dest}'.format(dest=redirect_to)})
+                {'url': None, 'error': 'No URL found for {dest}'.format(dest=link_name)})
             response.status_code = 404
             return response
 

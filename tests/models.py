@@ -304,7 +304,7 @@ class DagTest(unittest.TestCase):
         class DummyTestOperator(BaseOperator):
             extra_links = ['foo-bar']
 
-            def get_extra_links(self, ddtm, redirect_to):
+            def get_extra_links(self, ddtm, link_name):
                 return('www.foo-bar.com')
 
         task = DummyTestOperator(task_id="some_dummy_task")
