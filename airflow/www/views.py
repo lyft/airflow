@@ -1772,35 +1772,30 @@ class Airflow(BaseView):
         dag = dagbag.get_dag(dag_id)
 
         if not dag or task_id not in dag.task_ids:
-            flash(
-                "Task [{}.{}] doesn't seem to exist"
-                " at the moment".format(dag_id, task_id),
-                "error")
-            return redirect(request.referrer or '/admin/')
+            response = jsonify({'url': None,
+                                'error': "can't find dag {dag} or task_id {task_id}".format(
+                                    dag=dag,
+                                    task_id=task_id
+                                )})
+            response.status_code = 404
+            return response
 
-        task = None
 
-        for t in dag.tasks:
-            if t.task_id == task_id:
-                task = t
-                break
+        task = dag.get_task(task_id)
 
         try:
             url = task.get_extra_links(dttm, redirect_to)
         except ValueError as err:
-            response = jsonify({'url': None,
-                                'error': str(err)})
+            response = jsonify({'url': None, 'error': str(err)})
             response.status_code = 404
             return response
         if url:
-            response = jsonify({'error': None,
-                                'url': url})
+            response = jsonify({'error': None, 'url': url})
             response.status_code = 200
             return response
         else:
             response = jsonify(
-                {'url': None,
-                 'error': 'No URL found for {dest}'.format(dest=redirect_to)})
+                {'url': None, 'error': 'No URL found for {dest}'.format(dest=redirect_to)})
             response.status_code = 404
             return response
 
