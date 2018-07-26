@@ -1,0 +1,159 @@
+{% extends "airflow/master.html" %}
+
+{% block head_css %}
+{{ super() }}
+<link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='dagre.css') }}">
+<link rel="stylesheet" type="text/css"
+    href="{{ url_for('static', filename='graph.css') }}">
+
+<style>
+.graph {
+  background: #dbd8d6;
+  border: 2px solid black;
+  border-radius: 15px;
+  display: block;+  margin: auto;
+}
+
+.vpadding {
+  padding-bottom: 30px;
+  padding-top: 30px;
+}
+</style>
+{% endblock %}
+
+
+{% block body %}
+<div>
+  <h1>Dag Dependency Graph</h1>
+  <div class="vpadding">
+    <label>Search for dag:</label>
+    <select id="dag_dropdown" class="js-example-basic-single" name="state"></select>
+    <label>Direction:</label>
+    <select id="direction_dropdown" class="js-example-basic-single" name="state"></select>
+    <label>Degree: </label>
+    <select id="degree_dropdown" class="js-example-basic-single" name="state"></select>
+    <button type="button" onclick="refresh()">Search</button>
+  </div>
+  <svg class="graph" id="graph" width="100%" height="700">
+    <g id="dig"/>
+  </svg>
+  <div class="vpadding">
+    <a target="_blank" href="https://www.github.com/lyft/etl">Documention Link</a>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block tail %}
+    {{ super() }}
+    <script src="{{ url_for('static', filename='d3.v3.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='dagre-d3.js') }}"></script>
+    <script src="{{ url_for('static', filename='plugins/dag-dependency-graph-manager.js') }}"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+    
+    <script>
+    function setup() {
+      let graph = {{graph|tojson}};
+      setupDropdown("direction_dropdown", ['downstream', 'upstream']);
+      setupDropdown("dag_dropdown", ['all'].concat(graph.nodes));
+      setupDropdown("degree_dropdown", ['infinite', 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+      $(document).ready(function() {
+        $('.js-example-basic-single').select2();
+      });
+    }
+
+    function setupDropdown(id, options) {
+      let s = document.getElementById(id); 
+      for (let i = 0 ; i < options.length ; i++) {
+        let opt = options[i];
+        let element = document.createElement("option");
+        element.text = opt;
+        element.value = opt;
+        s.appendChild(element);
+      }
+    }
+
+    function render(dag_id = '', degree = -1, downstream = true) {
+      let highlight_color = "#000000";
+      let upstream_color = "#2020A0";
+      let downstream_color = "#0000FF";
+
+      let graph_manager = new GraphManager({{graph|tojson}});
+      let graph = graph_manager.getGraph(dag_id, degree, downstream);
+      console.log('graph');
+
+
+      let nodes = graph.nodes;
+      let edges = graph.edges;
+      let g = dagreD3.json.decode(nodes, edges);
+      let layout = dagreD3.layout().rankDir('LR').nodeSep(15).rankSep(15);
+      let renderer = new dagreD3.Renderer();
+      renderer.layout(layout).run(g, d3.select("#dig"));
+
+      function highlight_nodes(nodes, color) {
+          nodes.forEach (function (nodeid) {
+              my_node = d3.select('#' + nodeid + ' rect');
+              console.log(my_node);
+              my_node.style("stroke", color) ;
+          })
+      }
+
+      d3.selectAll("g.node").on("mouseover", function(d){
+          d3.select(this).selectAll("rect").style("stroke", highlight_color);
+      });
+
+      d3.selectAll("g.node").on("mouseout", function(d){
+          d3.select(this).selectAll("rect").style("stroke", null) ;
+      });
+
+      d3.selectAll("g.node").on("click", function(d){
+        let node = g.node(d);
+        let url = "https://etl-production.lyft.net/admin/airflow/tree?dag_id=" + node.label
+        let win = window.open(url, '_blank');
+        win.focus();
+      });
+
+    }
+
+    function getUserInputs() {
+      let returnObject = {}
+      let dag_dropdown_element = document.getElementById("dag_dropdown")
+      let dag_id = dag_dropdown_element.options[dag_dropdown_element.selectedIndex].value;
+      if (dag_id == 'all') {
+        returnObject.dag_id = '';
+      } else {
+        returnObject.dag_id = dag_id;
+      }
+
+      let degree_dropdown_element = document.getElementById("degree_dropdown")
+      let degree = degree_dropdown_element.options[degree_dropdown_element.selectedIndex].value;
+      if (degree == 'infinite') {
+        returnObject.degree = -1;
+      } else {
+        returnObject.degree = degree;
+      }
+
+      let direction_dropdown_element = document.getElementById("direction_dropdown")
+      let downstream = direction_dropdown_element.options[direction_dropdown_element.selectedIndex].value;
+      if (downstream == 'downstream') {
+        returnObject.downstream = true;
+      } else {
+         returnObject.downstream = false;
+      }
+
+      return returnObject;
+    }
+
+    function refresh() {
+      let inputs = getUserInputs();
+      render(inputs.dag_id, inputs.degree, inputs.downstream);
+    }
+
+    setup();
+    render();
+
+    </script>
+{% endblock %}
