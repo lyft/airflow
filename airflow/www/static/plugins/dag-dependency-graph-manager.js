@@ -31,7 +31,6 @@ class GraphManager {
         }
     }
 
-
     getNodes(edges, nodes, dag_id) {
         let n = [];
         let nodeSet = new Set(['']);
@@ -53,7 +52,6 @@ class GraphManager {
                     n.push(this.formatNode(nodes[i]));
                     nodeSet.add(nodes[i]);
                 }
-
             }
         }
 
