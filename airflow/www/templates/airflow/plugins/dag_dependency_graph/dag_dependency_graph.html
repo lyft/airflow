@@ -86,8 +86,8 @@
       console.log('graph');
 
 
-      let nodes = graph.nodes; //{{ nodes|safe }};
-      let edges = graph.edges; //{{ edges|safe }};
+      let nodes = graph.nodes;
+      let edges = graph.edges;
       let g = dagreD3.json.decode(nodes, edges);
       let layout = dagreD3.layout().rankDir('LR').nodeSep(15).rankSep(15);
       let renderer = new dagreD3.Renderer();
