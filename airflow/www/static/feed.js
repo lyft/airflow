@@ -26,7 +26,6 @@
 // and publish them to an S3 bucket so any service at Lyft can
 // reference them
 
-// FIXME: Change to prod before pushing
 var DP_ANNOUNCEMENTS_FEED_URL = "https://dataplatformadmin.lyft.net/announcements.atom";
 
 var setCss = function(el, attrs) {
