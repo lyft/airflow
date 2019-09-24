@@ -551,21 +551,21 @@ class DagRunTest(unittest.TestCase):
             on_failure_callback=on_failure_callable,
             start_date=datetime.datetime(2017, 1, 1)
         )
-        dag_task1 = ShortCircuitOperator(
-            task_id='test_short_circuit_false',
-            dag=dag,
-            python_callable=lambda: False)
-        dag_task2 = DummyOperator(
+        # dag_task1 = ShortCircuitOperator(
+        #     task_id='test_short_circuit_false',
+        #     dag=dag,
+        #     python_callable=lambda: False)
+        dag_task2 = ShortCircuitOperator(
             task_id='test_state_succeeded1',
             dag=dag)
         dag_task3 = DummyOperator(
             task_id='test_state_failed2',
             dag=dag)
-        dag_task1.set_downstream(dag_task2)
+        # dag_task1.set_downstream(dag_task2)
         dag_task2.set_downstream(dag_task3)
 
         initial_task_states = {
-            'test_short_circuit_false': State.SUCCESS,
+            # 'test_short_circuit_false': State.SUCCESS,
             'test_state_succeeded1': State.SUCCESS,
             'test_state_failed2': State.FAILED,
         }
