@@ -548,6 +548,7 @@ class DagRunTest(unittest.TestCase):
         # self.assertEqual(State.FAILED, update_dag_state)
         dag = DAG(
             dag_id='test_dagrun_failure_callback',
+            on_failure_callback=on_failure_callable,
             start_date=datetime.datetime(2017, 1, 1)
         )
         dag_task1 = ShortCircuitOperator(
