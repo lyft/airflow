@@ -22,12 +22,13 @@ import logging
 import os
 import unittest
 import time
+import pytest
 
 from airflow import models, settings, AirflowException
 from airflow.exceptions import AirflowSkipException
 from airflow.models import DAG, TaskInstance as TI
 from airflow.models import State as ST
-from airflow.models import DagModel, DagStat
+from airflow.models import DagModel, DagStat, DagRun
 from airflow.operators import BaseOperator
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.bash_operator import BashOperator
@@ -36,8 +37,7 @@ from airflow.operators.python_operator import ShortCircuitOperator
 from airflow.ti_deps.deps.trigger_rule_dep import TriggerRuleDep
 from airflow.utils.state import State
 from mock import patch
-from nose_parameterized import parameterized
-
+from parameterized import parameterized
 
 DEFAULT_DATE = datetime.datetime(2016, 1, 1)
 TEST_DAGS_FOLDER = os.path.join(
@@ -219,19 +219,19 @@ class DagTest(unittest.TestCase):
         session.commit()
 
         self.assertEqual(0, DAG.get_num_task_instances(test_dag_id, ['fakename'],
-            session=session))
+                                                       session=session))
         self.assertEqual(4, DAG.get_num_task_instances(test_dag_id, [test_task_id],
-            session=session))
+                                                       session=session))
         self.assertEqual(4, DAG.get_num_task_instances(test_dag_id,
-            ['fakename', test_task_id], session=session))
+                                                       ['fakename', test_task_id], session=session))
         self.assertEqual(1, DAG.get_num_task_instances(test_dag_id, [test_task_id],
-            states=[None], session=session))
+                                                       states=[None], session=session))
         self.assertEqual(2, DAG.get_num_task_instances(test_dag_id, [test_task_id],
-            states=[State.RUNNING], session=session))
+                                                       states=[State.RUNNING], session=session))
         self.assertEqual(3, DAG.get_num_task_instances(test_dag_id, [test_task_id],
-            states=[None, State.RUNNING], session=session))
+                                                       states=[None, State.RUNNING], session=session))
         self.assertEqual(4, DAG.get_num_task_instances(test_dag_id, [test_task_id],
-            states=[None, State.QUEUED, State.RUNNING], session=session))
+                                                       states=[None, State.QUEUED, State.RUNNING], session=session))
         session.close()
 
     def test_render_template_field(self):
@@ -252,7 +252,7 @@ class DagTest(unittest.TestCase):
 
         dag = DAG('test-dag',
                   start_date=DEFAULT_DATE,
-                  user_defined_macros = dict(foo='bar'))
+                  user_defined_macros=dict(foo='bar'))
 
         with dag:
             task = DummyOperator(task_id='op1')
@@ -262,7 +262,7 @@ class DagTest(unittest.TestCase):
 
     def test_user_defined_filters(self):
         def jinja_udf(name):
-            return 'Hello %s' %name
+            return 'Hello %s' % name
 
         dag = models.DAG('test-dag',
                          start_date=DEFAULT_DATE,
@@ -277,11 +277,11 @@ class DagTest(unittest.TestCase):
             if a custom filter was defined"""
 
         def jinja_udf(name):
-            return 'Hello %s' %name
+            return 'Hello %s' % name
 
         dag = DAG('test-dag',
                   start_date=DEFAULT_DATE,
-                  user_defined_filters = dict(hello=jinja_udf))
+                  user_defined_filters=dict(hello=jinja_udf))
 
         with dag:
             task = DummyOperator(task_id='op1')
@@ -302,6 +302,7 @@ class DagTest(unittest.TestCase):
         """
         test if a operator can support extra_links or not
         """
+
         class DummyTestOperator(BaseOperator):
             extra_links = ['foo-bar']
             extra_link_functions = {
@@ -362,6 +363,7 @@ class DagStatTest(unittest.TestCase):
         res = qry2.all()
         for stat in res:
             self.assertFalse(stat.dirty)
+
 
 class DagRunTest(unittest.TestCase):
 
@@ -512,14 +514,16 @@ class DagRunTest(unittest.TestCase):
 
     def test_dagrun_failure_callback(self):
         failure_call = False
+
         def on_failure_callable(context):
             self.assertEqual(context['dag_run'].dag_id,
                              'test_dagrun_failure_callback')
             failure_call = True
+
         dag = DAG(
             dag_id='test_dagrun_failure_callback',
             start_date=datetime.datetime(2017, 1, 1),
-            on_failure_callback = on_failure_callable,
+            on_failure_callback=on_failure_callable,
         )
         dag_task1 = DummyOperator(
             task_id='test_state_succeeded1',
@@ -529,12 +533,13 @@ class DagRunTest(unittest.TestCase):
             task_id='test_state_failed2',
             dag=dag
         )
+        dag_task1.set_downstream(dag_task2)
 
         initial_task_states = {
-            'task_state_succeeded1':State.SUCCESS,
-            'test_state_failed2':State.FAILED,
+            'task_state_succeeded1': State.SUCCESS,
+            'test_state_failed2': State.FAILED,
         }
-        dag_task1.set_downstream(dag_task2)
+
         dag_run = self.create_dag_run(dag=dag,
                                       state=State.RUNNING,
                                       task_states=initial_task_states)
@@ -580,10 +585,10 @@ class DagRunTest(unittest.TestCase):
         dag = DAG(
             dag_id='test_latest_runs_1',
             start_date=DEFAULT_DATE)
-        dag_1_run_1 = self.create_dag_run(dag, 
-                execution_date=datetime.datetime(2015, 1, 1))
+        dag_1_run_1 = self.create_dag_run(dag,
+                                          execution_date=datetime.datetime(2015, 1, 1))
         dag_1_run_2 = self.create_dag_run(dag,
-                execution_date=datetime.datetime(2015, 1, 2))
+                                          execution_date=datetime.datetime(2015, 1, 2))
         dagruns = models.DagRun.get_latest_runs(session)
         session.close()
         for dagrun in dagruns:
@@ -666,7 +671,7 @@ class DagBagTest(unittest.TestCase):
         dagbag.process_file(os.path.join(TEST_DAGS_FOLDER, "test_zip.zip"))
         assert dagbag.get_dag("test_zip_dag")
 
-    @patch.object(DagModel,'get_current')
+    @patch.object(DagModel, 'get_current')
     def test_get_dag_without_refresh(self, mock_dagmodel):
         """
         Test that, once a DAG is loaded, it doesn't get refreshed again if it
@@ -680,6 +685,7 @@ class DagBagTest(unittest.TestCase):
 
         class TestDagBag(models.DagBag):
             process_file_calls = 0
+
             def process_file(self, filepath, only_if_updated=True, safe_mode=True):
                 if 'example_bash_operator.py' == os.path.basename(filepath):
                     TestDagBag.process_file_calls += 1
@@ -751,7 +757,6 @@ class TaskInstanceTest(unittest.TestCase):
             op3.start_date == DEFAULT_DATE + datetime.timedelta(days=1))
         self.assertTrue(
             op3.end_date == DEFAULT_DATE + datetime.timedelta(days=9))
-
 
     def test_set_dag(self):
         """
@@ -850,7 +855,6 @@ class TaskInstanceTest(unittest.TestCase):
         ti = TI(task=task, execution_date=datetime.datetime.now())
         ti.run()
         self.assertEqual(ti.state, models.State.NONE)
-
 
     @patch.object(TI, 'pool_full')
     def test_run_pooling_task(self, mock_pool_full):
@@ -1036,11 +1040,11 @@ class TaskInstanceTest(unittest.TestCase):
 
         ti.try_number = 9
         dt = ti.next_retry_datetime()
-        self.assertEqual(dt, ti.end_date+max_delay)
+        self.assertEqual(dt, ti.end_date + max_delay)
 
         ti.try_number = 50
         dt = ti.next_retry_datetime()
-        self.assertEqual(dt, ti.end_date+max_delay)
+        self.assertEqual(dt, ti.end_date + max_delay)
 
     def test_depends_on_past(self):
         dagbag = models.DagBag()
