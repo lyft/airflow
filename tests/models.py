@@ -574,7 +574,7 @@ class DagRunTest(unittest.TestCase):
                                       state=State.RUNNING,
                                       task_states=initial_task_states)
         updated_dag_state = dag_run.update_state()
-        self.assertEqual(State.SUCCESS, updated_dag_state)
+        self.assertEqual(State.FAILED, updated_dag_state)
         self.assertTrue(failure_call)
 
     def test_get_task_instance_on_empty_dagrun(self):
