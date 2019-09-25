@@ -1451,7 +1451,6 @@ class TaskInstance(Base, LoggingMixin):
         self.render_templates()
         task_copy.dry_run()
 
-    @provide_session
     def handle_failure(self, error, test_mode=False, context=None):
         logging.exception(error)
         task = self.task
@@ -4446,10 +4445,9 @@ class DagRun(Base):
             session=session
         )
         none_depends_on_past = all(not t.task.depends_on_past for t in unfinished_tasks)
-        none_task_concurrency = all(t.task.task_concurrency is None
-                                    for t in unfinished_tasks)
+
         # small speed up
-        if unfinished_tasks and none_depends_on_past and none_task_concurrency:
+        if unfinished_tasks and none_depends_on_past:
             # todo: this can actually get pretty slow: one task costs between 0.01-015s
             no_dependencies_met = all(
                 # Use a special dependency context that ignores task's up for retry
