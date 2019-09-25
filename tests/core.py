@@ -459,7 +459,6 @@ class CoreTest(unittest.TestCase):
         def check_failure(context, test_case=self):
             data['called'] = True
             error = context.get('exception')
-            print (context.get('exception') + '    Sherry')
             test_case.assertIsInstance(error, AirflowException)
 
         t = BashOperator(
