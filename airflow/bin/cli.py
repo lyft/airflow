@@ -1433,7 +1433,8 @@ def connections(args):
             elif conn_uri is None:
                 missing_args.append('conn_uri')
         if missing_args:
-            print('The following args are required to add a connection: {missing!r}\n'.format(missing=missing_args))
+            print('The following args are required to add a connection: {missing!r}'
+                  .format(missing=missing_args))
             return
         with db.create_session() as session:
             # get exist conn_id list
@@ -1444,11 +1445,17 @@ def connections(args):
                 if conn_id not in exist_conns_id:
                     new_conn = Connection(conn_id=conn_id, uri=conn_uri)
                     db.merge_conn(new_conn, session)
-                    print('Successfully added `conn_id`={} : {}\n'.format(conn_id, conn_uri))
+                    print('Successfully added `conn_id`={} : {}'.format(conn_id, conn_uri))
                 else:
+                    to_delete = (session
+                                 .query(Connection)
+                                 .filter(Connection.conn_id == conn_id)
+                                 .one())
+                    session.delete(to_delete)
+                    print('Successfully delete old `conn_id`={} : {}'.format(conn_id, conn_uri))
                     update_conn = Connection(conn_id=conn_id, uri=conn_uri)
                     session.add(update_conn)
-                    print('Successfully update `conn_id`={} : {}\n'.format(conn_id, conn_uri))
+                    print('Successfully update `conn_id`={} : {}'.format(conn_id, conn_uri))
         return
 
 
