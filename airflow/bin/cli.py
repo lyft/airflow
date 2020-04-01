@@ -1438,7 +1438,6 @@ def connections(args):
         with db.create_session() as session:
             # get exist conn_id list
             exist_conns_id = [exist_conn.conn_id for exist_conn in session.query(Connection).all()]
-            print(exist_conns_id)
             # if conn_id not in exist list, then create the Connection
             # if conn_id in exist list, then update the Connection
             for conn_id, conn_uri in connections.items():
