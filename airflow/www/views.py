@@ -91,7 +91,7 @@ from airflow.www.validators import GreaterEqualThan
 QUERY_LIMIT = 100000
 CHART_LIMIT = 200000
 
-UTF8_READER = codecs.getrfeader('utf-8')
+UTF8_READER = codecs.getreader('utf-8')
 
 dagbag = models.DagBag(settings.DAGS_FOLDER, store_serialized_dags=STORE_SERIALIZED_DAGS)
 if conf.getboolean('webserver', 'locally_sync_dagbag'):
