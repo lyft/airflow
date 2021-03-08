@@ -446,14 +446,6 @@ class DagBag(BaseDagBag, LoggingMixin):
                 self.log.exception(e)
         self.dagbag_stats = sorted(
             stats, key=lambda x: x.duration, reverse=True)
-        for file_stat in self.dagbag_stats:
-            dag_ids = dags_by_name[file_stat.dags]
-            if file_stat.dag_num >= 1:
-                # if we found multiple dags per file, the stat is 'dag_id1 _ dag_id2'
-                dag_names = '_'.join(dag_ids)
-                Stats.timing('dag.loading-duration.{}'.
-                             format(dag_names),
-                             file_stat.duration)
 
     def collect_dags_from_db(self):
         """Collects DAGs from database."""
