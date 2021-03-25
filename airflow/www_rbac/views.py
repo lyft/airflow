@@ -2466,6 +2466,7 @@ class DagRunModelView(AirflowModelView):
         return redirect(self.get_redirect())
 
     @action('set_running', "Set state to 'running'", '', single=False)
+    @has_dag_access_ti_or_dagrun(can_dag_edit=True)
     @provide_session
     def action_set_running(self, drs, session=None):
         try:
@@ -2488,6 +2489,7 @@ class DagRunModelView(AirflowModelView):
     @action('set_failed', "Set state to 'failed'",
             "All running task instances would also be marked as failed, are you sure?",
             single=False)
+    @has_dag_access_ti_or_dagrun(can_dag_edit=True)
     @provide_session
     def action_set_failed(self, drs, session=None):
         try:
@@ -2515,6 +2517,7 @@ class DagRunModelView(AirflowModelView):
     @action('set_success', "Set state to 'success'",
             "All task instances would also be marked as success, are you sure?",
             single=False)
+    @has_dag_access_ti_or_dagrun(can_dag_edit=True)
     @provide_session
     def action_set_success(self, drs, session=None):
         try:
