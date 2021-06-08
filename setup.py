@@ -176,7 +176,7 @@ celery = [
     'celery~=4.3',
     'flower>=0.7.3, <1.0',
     'kombu==4.6.3;python_version<"3.0"',
-    'tornado>=4.2.0, <6.0',  # Dep of flower. Pin to a version that works on Py3.5.2
+    'tornado>=6.0',  # Dep of flower. Pin to a version that works on Py3.5.2
 ]
 cgroups = [
     'cgroupspy>=0.1.4',
