@@ -466,7 +466,7 @@ def do_setup():
             'cryptography>=0.9.3',
             'dill>=0.2.2, <0.4',
             'flask>=1.1.0, <2.0',
-            'flask-appbuilder~=2.2',
+            'flask-appbuilder~=3.0.0, <3.1.0;python_version>=3.6',
             'flask-caching>=1.3.3, <1.4.0',
             'flask-login>=0.3, <0.5',
             'flask-swagger==0.2.13',
