@@ -485,7 +485,7 @@ def do_setup():
             'pendulum==1.4.4',
             'psutil>=4.2.0, <6.0.0',
             'pygments>=2.0.1, <3.0',
-            'python-daemon>=2.1.1, <2.2',
+            'python-daemon>=2.1.1',
             'python-dateutil>=2.3, <3',
             'requests>=2.20.0, <3',
             'setproctitle>=1.1.8, <2',
