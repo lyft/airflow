@@ -458,7 +458,7 @@ def do_setup():
         install_requires=[
             'alembic>=1.2, <2.0',
             'argcomplete~=1.10',
-            'attrs~=19.3',
+            'attrs>=19.3',
             'cached_property~=1.5',
             'cattrs~=1.0',
             'colorlog==4.0.2',
