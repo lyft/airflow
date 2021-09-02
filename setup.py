@@ -475,7 +475,7 @@ def do_setup():
             'graphviz>=0.12',
             'gunicorn>=19.5.0, <20.0',
             'iso8601>=0.1.12',
-            'jinja2>=2.10.1, <2.11.0',
+            'jinja2>=2.10.1',
             'json-merge-patch==0.2',
             'jsonschema~=3.0',
             'lazy_object_proxy~=1.3',
