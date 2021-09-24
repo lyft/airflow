@@ -329,6 +329,11 @@ def configure_action_logging():
     module
     :rtype: None
     """
+    try:
+        from airflow_local_settings import * # noqa
+        log.info("Loaded airflow_local_settings.")
+    except Exception as e:
+        log.error('Failed to load airflow_local_settings because of: %s', str(e))
 
 
 def prepare_syspath():

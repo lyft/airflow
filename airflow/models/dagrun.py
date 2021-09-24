@@ -363,6 +363,7 @@ class DagRun(Base, LoggingMixin):
         # check for removed or restored tasks
         task_ids = []
         for ti in tis:
+            settings.task_instance_policy(ti) # Added to support task_instance_policy
             task_ids.append(ti.task_id)
             task = None
             try:
@@ -384,7 +385,7 @@ class DagRun(Base, LoggingMixin):
                               "removed from DAG '{}'".format(ti, dag))
                 Stats.incr("task_restored_to_dag.{}".format(dag.dag_id), 1, 1)
                 ti.state = State.NONE
-
+            session.merge(ti)
         # check for missing tasks
         for task in six.itervalues(dag.task_dict):
             if task.start_date > self.execution_date and not self.is_backfill:
@@ -395,6 +396,7 @@ class DagRun(Base, LoggingMixin):
                     "task_instance_created-{}".format(task.__class__.__name__),
                     1, 1)
                 ti = TaskInstance(task, self.execution_date)
+                settings.task_instance_policy(ti) # Added to support task_instance_policy
                 session.add(ti)
 
         session.commit()

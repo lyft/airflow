@@ -23,7 +23,7 @@ from collections import OrderedDict
 # To avoid circular imports
 import airflow.utils.dag_processing
 from airflow.configuration import conf
-from airflow.settings import Stats
+from airflow.settings import Stats, task_instance_policy
 from airflow.utils.log.logging_mixin import LoggingMixin
 from airflow.utils.state import State
 
@@ -91,7 +91,7 @@ class BaseExecutor(LoggingMixin):
             airflow.utils.dag_processing.SimpleTaskInstance(task_instance),
             command,
             priority=task_instance.task.priority_weight_total,
-            queue=task_instance.task.queue)
+            queue=task_instance.queue) # Modified to support task_instance_policy
 
     def has_task(self, task_instance):
         """
