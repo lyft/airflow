@@ -154,6 +154,17 @@ Session = None
 json = json
 
 
+def task_instance_policy(task_instance):
+    # type: (TaskInstance) -> None
+    """
+    This policy setting allows altering task instance right before they
+    are queued by the scheduler.
+    Note: this policy is not applied if the task is executed via
+    airflow {backfill,test}
+    """
+    pass
+
+
 def policy(task_instance):
     """
     This policy setting allows altering task instances right before they
