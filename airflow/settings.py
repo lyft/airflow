@@ -330,7 +330,7 @@ def configure_action_logging():
     :rtype: None
     """
     try:
-        from airflow_local_settings import * # noqa
+        from airflow_local_settings import task_instance_policy
         log.info("Loaded airflow_local_settings.")
     except Exception as e:
         log.error('Failed to load airflow_local_settings because of: %s', str(e))
