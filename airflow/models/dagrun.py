@@ -26,6 +26,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import synonym
 from sqlalchemy.orm.session import Session
+from airflow import settings
 from airflow.exceptions import AirflowException
 from airflow.models.base import Base, ID_LEN
 from airflow.settings import Stats
