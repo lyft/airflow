@@ -472,7 +472,7 @@ def do_setup():
             'jsonschema~=3.0',
             'lazy_object_proxy~=1.3',
             'markdown>=2.5.2, <3.0',
-            'pandas>=1.0.0, <2.0.0',
+            'pandas>=0.22.0, <2.0.0',
             'pendulum==1.4.4',
             'psutil>=4.2.0, <6.0.0',
             'pygments>=2.0.1, <3.0',
