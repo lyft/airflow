@@ -342,7 +342,7 @@ def configure_action_logging():
     """
 
 try:
-  from airflow_local_settings import task_instance_policy
+  from airflow_local_settings import *
   log.info("Loaded airflow_local_settings.")
 except Exception as e:
   log.error('Failed to load airflow_local_settings because of: %s', str(e))
