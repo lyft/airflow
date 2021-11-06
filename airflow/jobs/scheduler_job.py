@@ -1685,6 +1685,7 @@ class SchedulerJob(BaseJob):
         except Exception:
             self.log.exception("Error logging import errors!")
         try:
+            Stats.gauge('scheduler.num_zombie_tasks', len(zombies))
             dagbag.kill_zombies(zombies)
         except Exception:
             self.log.exception("Error killing zombies!")
