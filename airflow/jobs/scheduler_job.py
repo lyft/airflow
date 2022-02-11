@@ -180,7 +180,7 @@ class DagFileProcessor(AbstractDagFileProcessor, LoggingMixin, MultiprocessingSt
         start_method = self._get_multiprocessing_start_method()
         context = multiprocessing.get_context()
 
-        self._parent_channel, _child_channel = context
+        self._parent_channel, _child_channel = context.Pipe()
         self._process = context.Process(
             target=type(self)._run_file_processor,
             args=(
