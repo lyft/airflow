@@ -341,11 +341,11 @@ def configure_action_logging():
     :rtype: None
     """
 
-try:
-  from airflow_local_settings import *
-  log.info("Loaded airflow_local_settings.")
-except Exception as e:
-  log.error('Failed to load airflow_local_settings because of: %s', str(e))
+# try:
+#   from airflow_local_settings import *
+#   log.info("Loaded airflow_local_settings.")
+# except Exception as e:
+#   log.error('Failed to load airflow_local_settings because of: %s', str(e))
 
 
 def prepare_syspath():
