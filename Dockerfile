@@ -269,11 +269,14 @@ ENV INSTALL_FROM_PYPI=${INSTALL_FROM_PYPI}
 
 # Those are additional constraints that are needed for some extras but we do not want to
 # Force them on the main Airflow package.
-# * chardet<4 - required to keep snowflake happy
-# * urllib3 - required to keep boto3 happy
-# * pytz<2021.0: required by snowflake provider
-# * pyjwt<2.0.0: flask-jwt-extended requires it
-ARG EAGER_UPGRADE_ADDITIONAL_REQUIREMENTS="chardet<4 urllib3<1.26 pytz<2021.0 pyjwt<2.0.0"
+# * certifi<2021.0.0 required to keep snowflake happy
+# * dill<0.3.3 required by apache-beam
+ARG EAGER_UPGRADE_ADDITIONAL_REQUIREMENTS="dill<0.3.3 certifi<2021.0.0"
+
+ENV ADDITIONAL_PYTHON_DEPS=${ADDITIONAL_PYTHON_DEPS} \
+    INSTALL_FROM_DOCKER_CONTEXT_FILES=${INSTALL_FROM_DOCKER_CONTEXT_FILES} \
+    INSTALL_FROM_PYPI=${INSTALL_FROM_PYPI} \
+    EAGER_UPGRADE_ADDITIONAL_REQUIREMENTS=${EAGER_UPGRADE_ADDITIONAL_REQUIREMENTS}
 
 WORKDIR /opt/airflow
 

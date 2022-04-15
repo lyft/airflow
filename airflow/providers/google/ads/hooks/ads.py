@@ -19,13 +19,18 @@
 from tempfile import NamedTemporaryFile
 from typing import IO, Any, Dict, Generator, List
 
-from cached_property import cached_property
-from google.ads.google_ads.client import GoogleAdsClient
-from google.ads.google_ads.errors import GoogleAdsException
-from google.ads.google_ads.v2.types import GoogleAdsRow
+if sys.version_info >= (3, 8):
+    from functools import cached_property
+else:
+    from cached_property import cached_property
+
+from google.ads.googleads.client import GoogleAdsClient
+from google.ads.googleads.errors import GoogleAdsException
+from google.ads.googleads.v10.services.services.customer_service import CustomerServiceClient
+from google.ads.googleads.v10.services.services.google_ads_service import GoogleAdsServiceClient
+from google.ads.googleads.v10.services.types.google_ads_service import GoogleAdsRow, SearchGoogleAdsRequest
 from google.api_core.page_iterator import GRPCIterator
 from google.auth.exceptions import GoogleAuthError
-from googleapiclient.discovery import Resource
 
 from airflow import AirflowException
 from airflow.hooks.base import BaseHook
@@ -46,12 +51,12 @@ class GoogleAdsHook(BaseHook):
             {
                 "google_ads_client": {
                     "developer_token": "{{ INSERT_TOKEN }}",
-                    "path_to_private_key_file": null,
-                    "delegated_account": "{{ INSERT_DELEGATED_ACCOUNT }}"
+                    "json_key_file_path": null,
+                    "impersonated_email": "{{ INSERT_IMPERSONATED_EMAIL }}"
                 }
             }
 
-        The ``path_to_private_key_file`` is resolved by the hook using credentials from gcp_conn_id.
+        The ``json_key_file_path`` is resolved by the hook using credentials from gcp_conn_id.
         https://developers.google.com/google-ads/api/docs/client-libs/python/oauth-service
 
     .. seealso::
@@ -71,6 +76,8 @@ class GoogleAdsHook(BaseHook):
     :rtype: list[GoogleAdsRow]
     """
 
+    default_api_version = "v10"
+
     def __init__(
         self,
         gcp_conn_id: str = "google_cloud_default",
@@ -85,8 +92,13 @@ class GoogleAdsHook(BaseHook):
         self.google_ads_config: Dict[str, Any] = {}
 
     @cached_property
-    def _get_service(self) -> Resource:
+    def _get_service(self) -> GoogleAdsServiceClient:
         """Connects and authenticates with the Google Ads API using a service account"""
+        client = self._get_client
+        return client.get_service("GoogleAdsService", version=self.api_version)
+
+    @cached_property
+    def _get_client(self) -> GoogleAdsClient:
         with NamedTemporaryFile("w", suffix=".json") as secrets_temp:
             self._get_config()
             self._update_config_with_secret(secrets_temp)
@@ -98,7 +110,7 @@ class GoogleAdsHook(BaseHook):
                 raise
 
     @cached_property
-    def _get_customer_service(self) -> Resource:
+    def _get_customer_service(self) -> CustomerServiceClient:
         """Connects and authenticates with the Google Ads API using a service account"""
         with NamedTemporaryFile("w", suffix=".json") as secrets_temp:
             self._get_config()
@@ -132,7 +144,7 @@ class GoogleAdsHook(BaseHook):
         secrets_temp.write(secret)
         secrets_temp.flush()
 
-        self.google_ads_config["path_to_private_key_file"] = secrets_temp.name
+        self.google_ads_config["json_key_file_path"] = secrets_temp.name
 
     def search(
         self, client_ids: List[str], query: str, page_size: int = 10000, **kwargs
@@ -151,9 +163,17 @@ class GoogleAdsHook(BaseHook):
         :rtype: list[GoogleAdsRow]
         """
         service = self._get_service
-        iterators = (
-            service.search(client_id, query=query, page_size=page_size, **kwargs) for client_id in client_ids
-        )
+
+        iterators = []
+        for client_id in client_ids:
+            request = self._get_client.get_type("SearchGoogleAdsRequest")  # type: SearchGoogleAdsRequest
+            request.customer_id = client_id
+            request.query = query
+            request.page_size = page_size
+
+            iterator = service.search(request=request)
+            iterators.append(iterator)
+
         self.log.info("Fetched Google Ads Iterators")
 
         return self._extract_rows(iterators)
