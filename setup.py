@@ -85,7 +85,7 @@ def do_setup():
             'google-cloud-storage>=1.30,<2.0.0',
             'google-cloud-tasks>=2.0.0,<3.0.0',
             'google-cloud-texttospeech>=0.4.0,<2.0.0',
-            'google-cloud-translate>=1.5.0,<2.0.0',
+            # 'google-cloud-translate>=1.5.0,<2.0.0',
             'google-cloud-videointelligence>=1.7.0,<2.0.0',
             'google-cloud-vision>=0.35.2,<2.0.0',
             'google-cloud-workflows>=0.1.0,<2.0.0',
