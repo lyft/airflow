@@ -2006,7 +2006,7 @@ airflow_commands: list[CLICommand] = [
         name='sync-to-db',
         help="Save attributes about list of DAGs in dag_bag to the DB",
         func=lazy_load_command('airflow.cli.commands.sync_to_db_command.sync_to_db'),
-        args=(ARG_INCLUDE_DAGS,),
+        args=(),
     ),
 ]
 ALL_COMMANDS_DICT: dict[str, CLICommand] = {sp.name: sp for sp in airflow_commands}
