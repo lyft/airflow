@@ -387,7 +387,7 @@ class DAG(LoggingMixin):
         end_date: datetime | None = None,
         full_filepath: str | None = None,
         template_searchpath: str | Iterable[str] | None = None,
-        template_undefined: type[jinja2.StrictUndefined] = jinja2.StrictUndefined,
+        template_undefined: type[jinja2.Undefined] = jinja2.Undefined,
         user_defined_macros: dict | None = None,
         user_defined_filters: dict | None = None,
         default_args: dict | None = None,
