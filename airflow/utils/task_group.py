@@ -25,6 +25,7 @@ import copy
 import functools
 import operator
 import re
+import warnings
 import weakref
 from typing import TYPE_CHECKING, Any, Generator, Iterator, Sequence
 
@@ -163,8 +164,10 @@ class TaskGroup(DAGNode):
         # Example : task_group ==> task_group__1 -> task_group__2 -> task_group__3
         if self._group_id in self.used_group_ids:
             if not add_suffix_on_collision:
-                raise DuplicateTaskIdFound(f"group_id '{self._group_id}' has already been added to the DAG")
-            base = re.split(r"__\d+$", self._group_id)[0]
+                # TODO revert this after Airflow 2.0 upgrade is stable - over-written tasks are a data quality issue
+                warnings.warn(f"group_id '{self.group_id}' has already been added to the DAG",
+                              category=PendingDeprecationWarning)
+            base = re.split(r'__\d+$', self._group_id)[0]
             suffixes = sorted(
                 int(re.split(r"^.+__", used_group_id)[1])
                 for used_group_id in self.used_group_ids
@@ -216,8 +219,19 @@ class TaskGroup(DAGNode):
         key = task.node_id
 
         if key in self.children:
+<<<<<<< HEAD
             node_type = "Task" if hasattr(task, "task_id") else "Task Group"
             raise DuplicateTaskIdFound(f"{node_type} id '{key}' has already been added to the DAG")
+=======
+            node_type = "Task" if hasattr(task, 'task_id') else "Task Group"
+            # TODO revert this after Airflow 2.0 upgrade is stable - over-written tasks are a data quality issue
+            warnings.warn(
+                'The requested task could not be added to the DAG because a '
+                f'{node_type} with id {key} is already in the DAG. This is not supported'
+                'behavior as overwritten tasks enables unexpected behavior from DAG definition to creation.'
+                'This will cause an exception once this patch is removed.',
+                category=PendingDeprecationWarning)
+>>>>>>> 2bfd90a97d (temp handle overwritten tasks in task groups)
 
         if isinstance(task, TaskGroup):
             if self.dag:
