@@ -242,6 +242,8 @@ def _find_path_from_directory(
                 # TODO remove until symlink is removed in hive_dags (DATAOR-942)
                 if 'etl/sql/hive' in str(dirpath):
                     continue
+                if 'tars' in os.getenv('SERVICE', ''):
+                    continue
                 raise RuntimeError(
                     "Detected recursive loop when walking DAG directory "
                     f"{base_dir_path}: {dirpath} has appeared more than once."
