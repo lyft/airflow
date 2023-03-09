@@ -28,6 +28,8 @@ from pathspec.patterns import GitWildMatchPattern
 from typing_extensions import Protocol
 
 from airflow.configuration import conf
+from airflowinfra.migrated_dag_files import MIGRATED_DAG_FILES
+from airflowinfra.staging_migrated_dag_files import STAGING_MIGRATED_DAG_FILES
 
 if TYPE_CHECKING:
     import pathlib
@@ -212,6 +214,9 @@ def _find_path_from_directory(
     # A Dict of patterns, keyed using resolved, absolute paths
     patterns_by_dir: Dict[Path, List[_IgnoreRule]] = {}
 
+    migrated_dags_set = MIGRATED_DAG_FILES if os.environ.get("SERVICE_INSTANCE", "").lower() == "production" \
+        else STAGING_MIGRATED_DAG_FILES
+
     for root, dirs, files in os.walk(base_dir_path, followlinks=True):
         patterns: List[_IgnoreRule] = patterns_by_dir.get(Path(root).resolve(), [])
 
@@ -254,6 +259,12 @@ def _find_path_from_directory(
             abs_file_path = Path(root) / file
             if ignore_rule_type.match(abs_file_path, patterns):
                 continue
+
+            # only load dag files that are already migrated
+            # work around for poor negative look back regex performance
+            if str(abs_file_path) not in migrated_dags_set:
+                continue
+
             yield str(abs_file_path)
 
 
