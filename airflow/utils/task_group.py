@@ -219,10 +219,6 @@ class TaskGroup(DAGNode):
         key = task.node_id
 
         if key in self.children:
-<<<<<<< HEAD
-            node_type = "Task" if hasattr(task, "task_id") else "Task Group"
-            raise DuplicateTaskIdFound(f"{node_type} id '{key}' has already been added to the DAG")
-=======
             node_type = "Task" if hasattr(task, 'task_id') else "Task Group"
             # TODO revert this after Airflow 2.0 upgrade is stable - over-written tasks are a data quality issue
             warnings.warn(
@@ -231,7 +227,6 @@ class TaskGroup(DAGNode):
                 'behavior as overwritten tasks enables unexpected behavior from DAG definition to creation.'
                 'This will cause an exception once this patch is removed.',
                 category=PendingDeprecationWarning)
->>>>>>> 2bfd90a97d (temp handle overwritten tasks in task groups)
 
         if isinstance(task, TaskGroup):
             if self.dag:
