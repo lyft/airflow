@@ -39,6 +39,7 @@ class Variable(Base, LoggingMixin):
     id = Column(Integer, primary_key=True)
     key = Column(String(ID_LEN), unique=True)
     _val = Column('val', Text)
+    description = Column(Text)
     is_encrypted = Column(Boolean, unique=False, default=False)
 
     def __repr__(self):
@@ -76,7 +77,7 @@ class Variable(Base, LoggingMixin):
                        descriptor=property(cls.get_val, cls.set_val))
 
     @classmethod
-    def setdefault(cls, key, default, deserialize_json=False):
+    def setdefault(cls, key, default, description=None, deserialize_json=False):
         """
         Like a Python builtin dict object, setdefault returns the current value
         for a key, and if it isn't there, stores the default value and returns it.
@@ -86,6 +87,7 @@ class Variable(Base, LoggingMixin):
         :param default: Default value to set and return if the variable
             isn't already in the DB
         :type default: Mixed
+        :param description: Default value to set Description of the Variable
         :param deserialize_json: Store this as a JSON encoded value in the DB
             and un-encode it when retrieving a value
         :return: Mixed
@@ -94,7 +96,7 @@ class Variable(Base, LoggingMixin):
                            deserialize_json=deserialize_json)
         if obj is None:
             if default is not None:
-                Variable.set(key, default, serialize_json=deserialize_json)
+                Variable.set(key, default, description=description, serialize_json=deserialize_json)
                 return default
             else:
                 raise ValueError('Default Value must be set')
@@ -127,6 +129,7 @@ class Variable(Base, LoggingMixin):
         cls,
         key,  # type: str
         value,  # type: Any
+        description=None,  # type: str
         serialize_json=False,  # type: bool
         session=None
     ):
@@ -137,7 +140,7 @@ class Variable(Base, LoggingMixin):
             stored_value = str(value)
 
         Variable.delete(key, session=session)
-        session.add(Variable(key=key, val=stored_value))  # type: ignore
+        session.add(Variable(key=key, val=stored_value, description=description))  # type: ignore
         session.flush()
 
     @classmethod
