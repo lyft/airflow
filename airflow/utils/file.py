@@ -275,9 +275,9 @@ def _find_path_from_directory(
                 # temp patch to load new Flyte workflows into Airflow 2 to unblock initial migration users
                 # this will be replaced soon with look-up tables for mult-cluster Airflow
                 dag_repo = str(abs_file_path).split("/")[4]
-                if dag_repo in MIGRATED_FLYTE_REPOS:
-                    pass
-                elif not (is_airflow_dev_env or is_loadtest_env) and str(abs_file_path) not in migrated_dags_set:
+                if not (is_airflow_dev_env or is_loadtest_env) and \
+                   dag_repo not in MIGRATED_FLYTE_REPOS and \
+                   str(abs_file_path) not in migrated_dags_set:
                     continue
 
             yield str(abs_file_path)
