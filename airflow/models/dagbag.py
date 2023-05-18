@@ -401,8 +401,6 @@ class DagBag(LoggingMixin):
         found_dags = []
 
         for (dag, mod) in top_level_dags:
-            if dag.dag_id != "test":
-                continue
             dag.fileloc = mod.__file__
             try:
                 dag.validate()
