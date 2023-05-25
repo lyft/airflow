@@ -40,6 +40,7 @@ from airflow.exceptions import (
     AirflowDagCycleException,
     AirflowDagDuplicatedIdException,
     AirflowDagInconsistent,
+    AirflowFailException,
     AirflowTimetableInvalid,
     ParamValidationError,
 )
@@ -101,6 +102,7 @@ class DagBag(LoggingMixin):
     ):
         # Avoid circular import
         from airflow.models.dag import DAG
+        from airflowinfra.mutli_cluster_utils import fetch_dags_in_cluster
 
         super().__init__()
 
@@ -114,6 +116,8 @@ class DagBag(LoggingMixin):
             read_dags_from_db = store_serialized_dags
 
         dag_folder = dag_folder or settings.DAGS_FOLDER
+        # if this fetch fails, then so will this DagBag init process
+        self.cluster_dags = fetch_dags_in_cluster()
         self.dag_folder = dag_folder
         self.dags: Dict[str, DAG] = {}
         # the file's last modified timestamp when we last read it
@@ -401,6 +405,11 @@ class DagBag(LoggingMixin):
         found_dags = []
 
         for (dag, mod) in top_level_dags:
+            if not self.cluster_dags:
+                raise AirflowFailException
+            # only yield DAGs that load in the cluster
+            if dag not in self.cluster_dags:
+                continue
             dag.fileloc = mod.__file__
             try:
                 dag.validate()
