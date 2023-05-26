@@ -408,7 +408,7 @@ class DagBag(LoggingMixin):
             if not self.cluster_dags:
                 raise AirflowFailException
             # only yield DAGs that load in the cluster
-            if dag not in self.cluster_dags:
+            if dag.dag_id not in self.cluster_dags:
                 continue
             dag.fileloc = mod.__file__
             try:
