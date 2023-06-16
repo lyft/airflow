@@ -240,7 +240,8 @@ def _find_path_from_directory(
         # explicit loop for infinite recursion detection since we are following symlinks in this walk
         for sd in dirs:
             dirpath = (Path(root) / sd).resolve()
-            if dirpath in patterns_by_dir:
+            # ignore on TARS due to symlinking
+            if dirpath in patterns_by_dir and not is_tars:
                 # ignore symlinked test directories + hive_dags (DATAOR-942)
                 if 'etl/sql/hive' in str(dirpath) or '/tests/unit' in str(dirpath):
                     continue
