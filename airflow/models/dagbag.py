@@ -102,7 +102,7 @@ class DagBag(LoggingMixin):
     ):
         # Avoid circular import
         from airflow.models.dag import DAG
-        from airflowinfra.mutli_cluster_utils import fetch_dags_in_cluster
+        from airflowinfra.multi_cluster_utils import fetch_dags_in_cluster
 
         super().__init__()
 
