@@ -399,18 +399,20 @@ class DagBag(LoggingMixin):
 
     def _process_modules(self, filepath, mods, file_last_changed_on_disk):
         from airflow.models.dag import DAG  # Avoid circular import
+        from airflowinfra.multi_cluster_utils import fetch_dags_in_cluster
 
         top_level_dags = ((o, m) for m in mods for o in m.__dict__.values() if isinstance(o, DAG))
 
         found_dags = []
 
         for (dag, mod) in top_level_dags:
+            dag.fileloc = mod.__file__
             if not self.cluster_dags:
                 raise AirflowFailException
-            # only yield DAGs that load in the cluster
-            if dag.dag_id not in self.cluster_dags:
+            # only yield DAGs that are either in the dag mapping table or 
+            # are in flyte repos that have been migrated
+            if dag.dag_id not in self.cluster_dags and not _dag_in_migrated_flyte_repo(dag):  
                 continue
-            dag.fileloc = mod.__file__
             try:
                 dag.validate()
                 self.bag_dag(dag=dag, root_dag=dag)
@@ -672,3 +674,16 @@ class DagBag(LoggingMixin):
 
             security_manager = ApplessAirflowSecurityManager(session=session)
             security_manager.sync_perm_for_dag(root_dag_id, dag.access_control)
+
+    def _dag_in_migrated_flyte_repo(dag):
+
+        from airflowinfra.migrated_flyte_repos import MIGRATED_FLYTE_REPOS
+
+        migrated_flyte_dagdir_list = [
+            f'/etc/airflow/dags/{repo_name}' for repo_name in MIGRATED_FLYTE_REPOS
+        ]
+
+        for file_prefix in file_prefix:
+            if dag.fileloc.startswith(substring):
+                return True
+        return False
