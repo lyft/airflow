@@ -683,7 +683,7 @@ class DagBag(LoggingMixin):
             f'/etc/airflow/dags/{repo_name}' for repo_name in MIGRATED_FLYTE_REPOS
         ]
 
-        for file_prefix in file_prefix:
-            if dag.fileloc.startswith(substring):
+        for dagdir in migrated_flyte_dagdir_list:
+            if dag.fileloc.startswith(dagdir):
                 return True
         return False
