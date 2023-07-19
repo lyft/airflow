@@ -116,8 +116,13 @@ class DagBag(LoggingMixin):
             read_dags_from_db = store_serialized_dags
 
         dag_folder = dag_folder or settings.DAGS_FOLDER
+        
+        self.service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
+        
         # if this fetch fails, then so will this DagBag init process
-        self.cluster_dags = fetch_dags_in_cluster()
+        if self.service_instance == 'production':
+            self.cluster_dags = fetch_dags_in_cluster()
+        
         self.dag_folder = dag_folder
         self.dags: Dict[str, DAG] = {}
         # the file's last modified timestamp when we last read it
@@ -403,15 +408,13 @@ class DagBag(LoggingMixin):
 
         top_level_dags = ((o, m) for m in mods for o in m.__dict__.values() if isinstance(o, DAG))
 
-        service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
-
         found_dags = []
 
         for (dag, mod) in top_level_dags:
             dag.fileloc = mod.__file__
             
             # Restrict the dagbag for production DAGs.
-            if service_instance == 'production':
+            if self.service_instance == 'production':
 
                 if not self.cluster_dags:
                     raise AirflowFailException
