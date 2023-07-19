@@ -404,7 +404,6 @@ class DagBag(LoggingMixin):
 
     def _process_modules(self, filepath, mods, file_last_changed_on_disk):
         from airflow.models.dag import DAG  # Avoid circular import
-        from airflowinfra.multi_cluster_utils import fetch_dags_in_cluster
 
         top_level_dags = ((o, m) for m in mods for o in m.__dict__.values() if isinstance(o, DAG))
 
@@ -413,7 +412,8 @@ class DagBag(LoggingMixin):
         for (dag, mod) in top_level_dags:
             dag.fileloc = mod.__file__
             
-            # Restrict the dagbag for production DAGs.
+            # When in production, restrict the DagBag 
+            # to the appropriate set of DAGs.
             if self.service_instance == 'production':
 
                 if not self.cluster_dags:
