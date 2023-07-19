@@ -36,7 +36,7 @@ import six
 from airflow import settings
 from airflow.configuration import conf
 from airflow.dag.base_dag import BaseDagBag
-from airflow.exceptions import AirflowClusterPolicyViolation, AirflowDagCycleException
+from airflow.exceptions import AirflowClusterPolicyViolation, AirflowDagCycleException, AirflowFailException
 from airflow.executors import get_default_executor
 from airflow.settings import MIN_SERIALIZED_DAG_UPDATE_INTERVAL, Stats
 from airflow.utils import timezone
@@ -89,11 +89,19 @@ class DagBag(BaseDagBag, LoggingMixin):
             safe_mode=conf.getboolean('core', 'DAG_DISCOVERY_SAFE_MODE'),
             store_serialized_dags=False,
     ):
+        from airflowinfra.multi_cluster_utils import fetch_dags_in_cluster
 
         # do not use default arg in signature, to fix import cycle on plugin load
         if executor is None:
             executor = get_default_executor()
         dag_folder = dag_folder or settings.DAGS_FOLDER
+
+        self.service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
+
+        # if this fetch fails, then so will this DagBag init process
+        if self.service_instance == 'production':
+            self.cluster_dags = fetch_dags_in_cluster()
+
         self.dag_folder = dag_folder
         self.dags = {}
         self.reload_time_by_dag = {}
@@ -311,6 +319,22 @@ class DagBag(BaseDagBag, LoggingMixin):
                         dag.full_filepath = filepath
                         if dag.fileloc != filepath and not is_zipfile:
                             dag.fileloc = filepath
+
+                    # When in production, restrict the DagBag 
+                    # to the appropriate set of DAGs.
+                    if self.service_instance == 'production':
+
+                        if not self.cluster_dags:
+                            raise AirflowFailException
+                        # Do not load DAGs that are missing from the DAG mapping table 
+                        # and are not included in the Flyte repo allow list
+                        # (since we are automatically loading Flyte workflows to Airflow 2).
+                        if (
+                            dag.dag_id in self.cluster_dags 
+                            or _dag_in_migrated_flyte_repo(dag) 
+                        ):  
+                            continue
+
                     try:
                         dag.is_subdag = False
                         self.bag_dag(dag, parent_dag=dag, root_dag=dag)
@@ -495,3 +519,16 @@ class DagBag(BaseDagBag, LoggingMixin):
             task_num=sum([o.task_num for o in stats]),
             table=pprinttable(stats),
         )
+
+    def _dag_in_migrated_flyte_repo(dag):
+
+        from airflowinfra.migrated_flyte_repos import MIGRATED_FLYTE_REPOS
+
+        migrated_flyte_dagdir_list = [
+            f'/etc/airflow/dags/{repo_name}' for repo_name in MIGRATED_FLYTE_REPOS
+        ]
+
+        for dagdir in migrated_flyte_dagdir_list:
+            if dag.fileloc.startswith(dagdir):
+                return True
+        return False
