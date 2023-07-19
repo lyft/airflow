@@ -404,22 +404,25 @@ class DagBag(LoggingMixin):
         top_level_dags = ((o, m) for m in mods for o in m.__dict__.values() if isinstance(o, DAG))
 
         service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
-        if :
 
         found_dags = []
 
         for (dag, mod) in top_level_dags:
             dag.fileloc = mod.__file__
-            if not self.cluster_dags:
-                raise AirflowFailException
-            # only yield DAGs that are either in the dag mapping table or 
-            # are in flyte repos that have been migrated
-            if (
-                dag.dag_id not in self.cluster_dags 
-                and not _dag_in_migrated_flyte_repo(dag) 
-                and service_instance == 'production'
-            ):  
-                continue
+            
+            # Restrict the dagbag for production DAGs.
+            if service_instance == 'production':
+
+                if not self.cluster_dags:
+                    raise AirflowFailException
+                # Do not load DAGs that are missing from the DAG mapping table 
+                # and are not included in the Flyte repo allow list
+                # (since we are automatically loading Flyte workflows to Airflow 2).
+                if (
+                    dag.dag_id not in self.cluster_dags 
+                    and not _dag_in_migrated_flyte_repo(dag) 
+                ):  
+                    continue
             try:
                 dag.validate()
                 self.bag_dag(dag=dag, root_dag=dag)
