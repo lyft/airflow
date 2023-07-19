@@ -221,6 +221,7 @@ class DagBag(BaseDagBag, LoggingMixin):
         the module and look for dag objects within it.
         """
         from airflow.models.dag import DAG  # Avoid circular import
+        from airflowinfra.multi_cluster_utils import _dag_in_migrated_flyte_repo
 
         found_dags = []
 
@@ -519,16 +520,3 @@ class DagBag(BaseDagBag, LoggingMixin):
             task_num=sum([o.task_num for o in stats]),
             table=pprinttable(stats),
         )
-
-    def _dag_in_migrated_flyte_repo(dag):
-
-        from airflowinfra.migrated_flyte_repos import MIGRATED_FLYTE_REPOS
-
-        migrated_flyte_dagdir_list = [
-            f'/etc/airflow/dags/{repo_name}' for repo_name in MIGRATED_FLYTE_REPOS
-        ]
-
-        for dagdir in migrated_flyte_dagdir_list:
-            if dag.fileloc.startswith(dagdir):
-                return True
-        return False
