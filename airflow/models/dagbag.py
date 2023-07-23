@@ -115,15 +115,6 @@ class DagBag(LoggingMixin):
             read_dags_from_db = store_serialized_dags
 
         dag_folder = dag_folder or settings.DAGS_FOLDER
-        
-        self.service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
-        
-        # if this fetch fails, then so will this DagBag init process
-        if self.service_instance == 'production':
-
-            from airflowinfra.multi_cluster_utils import fetch_dags_in_cluster
-            self.cluster_dags = fetch_dags_in_cluster()
-        
         self.dag_folder = dag_folder
         self.dags: Dict[str, DAG] = {}
         # the file's last modified timestamp when we last read it
@@ -408,6 +399,13 @@ class DagBag(LoggingMixin):
 
         top_level_dags = ((o, m) for m in mods for o in m.__dict__.values() if isinstance(o, DAG))
 
+        service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
+
+        if service_instance == "production":
+            
+            from airflowinfra.multi_cluster_utils import _get_cluster_id_from_env
+            cluster_id = _get_cluster_id_from_env()
+
         found_dags = []
 
         for (dag, mod) in top_level_dags:
@@ -415,18 +413,14 @@ class DagBag(LoggingMixin):
             
             # When in production, restrict the DagBag 
             # to the appropriate set of DAGs.
-            if self.service_instance == 'production':
+            if service_instance == "production":
 
                 from airflowinfra.multi_cluster_utils import _dag_in_migrated_flyte_repo
-                
-                if not self.cluster_dags:
-                    raise AirflowFailException
-                # Do not load DAGs that are missing from the DAG mapping table 
-                # and are not included in the Flyte repo allow list
-                # (since we are automatically loading Flyte workflows to Airflow 2).
-                if (
-                    dag.dag_id not in self.cluster_dags 
-                    and not _dag_in_migrated_flyte_repo(dag) 
+                from airflowinfra.multi_clsuter_utils import _exclude_dag_from_dag_bag
+
+                if _exclude_dag_from_dag_bag(
+                    cluster_id=cluster_id,
+                    dag_id=dag_id,
                 ):  
                     continue
             try:
