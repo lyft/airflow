@@ -116,6 +116,19 @@ class DagBag(LoggingMixin):
 
         dag_folder = dag_folder or settings.DAGS_FOLDER
         self.dag_folder = dag_folder
+
+        self.service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
+
+        if self.service_instance == 'production':
+
+            from airflowinfra.multi_cluster_utils import _fetch_dags_in_dynamodb_cluster
+            from airflowinfra.multi_cluster_utils import _get_cluster_id_from_env
+            self.cluster_id = _get_cluster_id_from_env()
+            # Load all the DAGs in the cluster according to the dynamodb table.
+            # This allows us to assign new DAGs to the correct cluster in the 
+            # dynamodb table, which populates the multicluster UI.
+            self.dynamodb_cluster_dag_ids = _fetch_dag_ids_in_dynamodb_cluster(self.cluster_id)
+
         self.dags: Dict[str, DAG] = {}
         # the file's last modified timestamp when we last read it
         self.file_last_changed: Dict[str, datetime] = {}
@@ -399,13 +412,6 @@ class DagBag(LoggingMixin):
 
         top_level_dags = ((o, m) for m in mods for o in m.__dict__.values() if isinstance(o, DAG))
 
-        service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
-
-        if service_instance == "production":
-            
-            from airflowinfra.multi_cluster_utils import _get_cluster_id_from_env
-            cluster_id = _get_cluster_id_from_env()
-
         found_dags = []
 
         for (dag, mod) in top_level_dags:
@@ -413,16 +419,25 @@ class DagBag(LoggingMixin):
             
             # When in production, restrict the DagBag 
             # to the appropriate set of DAGs.
-            if service_instance == "production":
+            if self.service_instance == "production":
 
                 from airflowinfra.multi_cluster_utils import _dag_in_migrated_flyte_repo
                 from airflowinfra.multi_clsuter_utils import _exclude_dag_from_dag_bag
 
+                dag_id = dag.dag_id
+
                 if _exclude_dag_from_dag_bag(
-                    cluster_id=cluster_id,
+                    cluster_id=self.cluster_id,
                     dag_id=dag_id,
                 ):  
                     continue
+
+                _write_dag_id_to_dynamodb_if_missing_for_cluster(
+                    dag_id=dag_id,
+                    cluster_id=self.cluster_id,
+                    dynamodb_cluster_dag_ids=self.dynamodb_cluster_dag_ids,
+                )
+
             try:
                 dag.validate()
                 self.bag_dag(dag=dag, root_dag=dag)
