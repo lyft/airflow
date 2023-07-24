@@ -116,13 +116,13 @@ class DagBag(LoggingMixin):
 
         dag_folder = dag_folder or settings.DAGS_FOLDER
         self.dag_folder = dag_folder
-
+        
         self.service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
-
-        if self.service_instance == 'production':
+        if self.service_instance == 'staging':
 
             from airflowinfra.multi_cluster_utils import _fetch_dags_in_dynamodb_cluster
             from airflowinfra.multi_cluster_utils import _get_cluster_id_from_env
+            
             self.cluster_id = _get_cluster_id_from_env()
             # Load all the DAGs in the cluster according to the dynamodb table.
             # This allows us to assign new DAGs to the correct cluster in the 
@@ -417,18 +417,19 @@ class DagBag(LoggingMixin):
         for (dag, mod) in top_level_dags:
             dag.fileloc = mod.__file__
             
-            # When in production, restrict the DagBag 
-            # to the appropriate set of DAGs.
-            if self.service_instance == "production":
+            # When in production, restrict the DagBag to the appropriate set of DAGs.
+            if self.service_instance == "staging":
 
-                from airflowinfra.multi_cluster_utils import _dag_in_migrated_flyte_repo
-                from airflowinfra.multi_clsuter_utils import _exclude_dag_from_dag_bag
+                from airflowinfra.multi_cluster_utils import _exclude_dag_from_dag_bag
+                from airflowinfra.multi_cluster_utils import _write_dag_id_to_dynamodb_if_missing_for_cluster
 
                 dag_id = dag.dag_id
+                dag_fileloc = dag.fileloc
 
                 if _exclude_dag_from_dag_bag(
                     cluster_id=self.cluster_id,
                     dag_id=dag_id,
+                    dag_fileloc = dag.fileloc,
                 ):  
                     continue
 
