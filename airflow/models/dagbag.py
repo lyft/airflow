@@ -120,14 +120,14 @@ class DagBag(LoggingMixin):
         self.service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
         if self.service_instance == 'staging':
 
-            from airflowinfra.multi_cluster_utils import _fetch_dags_in_dynamodb_cluster
-            from airflowinfra.multi_cluster_utils import _get_cluster_id_from_env
+            from airflowinfra.multi_cluster_utils import fetch_dag_ids_in_dynamodb
+            from airflowinfra.multi_cluster_utils import get_cluster_id_from_env
             
-            self.cluster_id = _get_cluster_id_from_env()
+            self.cluster_id = get_cluster_id_from_env()
             # Load all the DAGs in the cluster according to the dynamodb table.
             # This allows us to assign new DAGs to the correct cluster in the 
             # dynamodb table, which populates the multicluster UI.
-            self.dynamodb_cluster_dag_ids = _fetch_dag_ids_in_dynamodb_cluster(self.cluster_id)
+            self.dynamodb_cluster_dag_ids = fetch_dag_ids_in_dynamodb(self.cluster_id)
 
         self.dags: Dict[str, DAG] = {}
         # the file's last modified timestamp when we last read it
@@ -420,20 +420,20 @@ class DagBag(LoggingMixin):
             # When in production, restrict the DagBag to the appropriate set of DAGs.
             if self.service_instance == "staging":
 
-                from airflowinfra.multi_cluster_utils import _exclude_dag_from_dag_bag
-                from airflowinfra.multi_cluster_utils import _write_dag_id_to_dynamodb_if_missing_for_cluster
+                from airflowinfra.multi_cluster_utils import exclude_dag_from_dag_bag
+                from airflowinfra.multi_cluster_utils import write_dag_id_to_dynamodb_if_missing_for_cluster
 
                 dag_id = dag.dag_id
                 dag_fileloc = dag.fileloc
 
-                if _exclude_dag_from_dag_bag(
+                if exclude_dag_from_dag_bag(
                     cluster_id=self.cluster_id,
                     dag_id=dag_id,
                     dag_fileloc = dag.fileloc,
                 ):  
                     continue
 
-                _write_dag_id_to_dynamodb_if_missing_for_cluster(
+                write_dag_id_to_dynamodb_if_missing_for_cluster(
                     dag_id=dag_id,
                     cluster_id=self.cluster_id,
                     dynamodb_cluster_dag_ids=self.dynamodb_cluster_dag_ids,
