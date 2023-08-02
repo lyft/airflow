@@ -419,7 +419,7 @@ class DagBag(LoggingMixin):
             
             # When in production, restrict the DagBag to the appropriate set of DAGs.
             # TODO: remove staging once tested.
-            if self.service_instance IN ("staging", "production"):
+            if self.service_instance in ("staging", "production"):
 
                 from airflowinfra.multi_cluster_utils import exclude_dag_from_dag_bag
                 from airflowinfra.multi_cluster_utils import write_dag_id_to_dynamodb_if_missing_for_cluster
