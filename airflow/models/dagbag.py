@@ -118,7 +118,8 @@ class DagBag(LoggingMixin):
         self.dag_folder = dag_folder
         
         self.service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
-        if self.service_instance == 'staging':
+        # TODO: remove staging
+        if self.service_instance in ("staging", "production"):
 
             from airflowinfra.multi_cluster_utils import fetch_dag_ids_in_dynamodb
             from airflowinfra.multi_cluster_utils import get_cluster_id_from_env
@@ -421,13 +422,13 @@ class DagBag(LoggingMixin):
             # TODO: remove staging once tested.
             if self.service_instance in ("staging", "production"):
 
-                from airflowinfra.multi_cluster_utils import exclude_dag_from_dag_bag
+                from airflowinfra.multi_cluster_utils import include_dag_in_dag_bag
                 from airflowinfra.multi_cluster_utils import write_dag_id_to_dynamodb_if_missing_for_cluster
 
                 dag_id = dag.dag_id
                 dag_fileloc = dag.fileloc
 
-                if exclude_dag_from_dag_bag(
+                if not include_dag_in_dag_bag(
                     cluster_id=self.cluster_id,
                     dag_id=dag_id,
                     dag_fileloc = dag.fileloc,
