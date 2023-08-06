@@ -116,7 +116,6 @@ class DagBag(LoggingMixin):
 
         dag_folder = dag_folder or settings.DAGS_FOLDER
         self.dag_folder = dag_folder
-
         self.service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
 
         if self.service_instance == "production":
