@@ -406,6 +406,10 @@ class DagBag(LoggingMixin):
     def _process_modules(self, filepath, mods, file_last_changed_on_disk):
         from airflow.models.dag import DAG  # Avoid circular import
 
+        # Set this rather than import from lyft_etl to avoid any circular import errors.
+        is_tars = "tars" in os.environ.get("SERVICE", "")
+        is_kyte = "kyte" in os.environ.get("SERVICE", "")
+
         top_level_dags = ((o, m) for m in mods for o in m.__dict__.values() if isinstance(o, DAG))
 
         found_dags = []
@@ -414,7 +418,7 @@ class DagBag(LoggingMixin):
             dag.fileloc = mod.__file__
             
             # When in production, restrict the DagBag to the appropriate set of DAGs.
-            if self.service_instance == "production":
+            if self.service_instance == "production" and not is_kyte and not is_tars:
 
                 from airflowinfra.multi_cluster_utils import include_dag_in_dag_bag
 
