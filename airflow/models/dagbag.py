@@ -321,7 +321,7 @@ class DagBag(BaseDagBag, LoggingMixin):
 
                         dag_id = dag.dag_id
 
-                        if not include_dag_in_dag_bag(dag_id=dag_id)
+                        if not include_dag_in_dag_bag(dag_id=dag_id):
                             continue
 
                     try:
