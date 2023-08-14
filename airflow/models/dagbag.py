@@ -317,9 +317,11 @@ class DagBag(BaseDagBag, LoggingMixin):
                     # to the appropriate set of DAGs.
                     if self.service_instance == 'production':
 
-                        from airflowinfra.migration_utils import _dag_in_migrated_flyte_repo
+                        from airflowinfra.migration_utils import include_dag_in_dag_bag
 
-                        if not   
+                        dag_id = dag.dag_id
+
+                        if not include_dag_in_dag_bag(dag_id=dag_id)
                             continue
 
                     try:
