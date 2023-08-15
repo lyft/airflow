@@ -95,13 +95,6 @@ class DagBag(BaseDagBag, LoggingMixin):
         dag_folder = dag_folder or settings.DAGS_FOLDER
 
         self.service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
-
-        # if this fetch fails, then so will this DagBag init process
-        if self.service_instance == 'production':
-
-            from airflowinfra.multi_cluster_utils import fetch_dags_in_cluster
-            self.cluster_dags = fetch_dags_in_cluster()
-
         self.dag_folder = dag_folder
         self.dags = {}
         self.reload_time_by_dag = {}
@@ -324,17 +317,11 @@ class DagBag(BaseDagBag, LoggingMixin):
                     # to the appropriate set of DAGs.
                     if self.service_instance == 'production':
 
-                        from airflowinfra.multi_cluster_utils import _dag_in_migrated_flyte_repo
+                        from airflowinfra.migration_utils import include_dag_in_dag_bag
 
-                        if not self.cluster_dags:
-                            raise AirflowFailException
-                        # Do not load DAGs that are missing from the DAG mapping table 
-                        # and are not included in the Flyte repo allow list
-                        # (since we are automatically loading Flyte workflows to Airflow 2).
-                        if (
-                            dag.dag_id in self.cluster_dags 
-                            or _dag_in_migrated_flyte_repo(dag) 
-                        ):  
+                        dag_id = dag.dag_id
+
+                        if not include_dag_in_dag_bag(dag_id=dag_id):
                             continue
 
                     try:
