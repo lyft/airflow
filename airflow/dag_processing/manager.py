@@ -952,7 +952,7 @@ class DagFileProcessorManager(LoggingMixin):
             while not processor.done:
                 time.sleep(0.1)
 
-    def _collect_results_from_processor(self, processor) -> None:x
+    def _collect_results_from_processor(self, processor) -> None:
         self.log.debug("Processor for %s finished", processor.file_path)
         Stats.decr('dag_processing.processes')
         last_finish_time = timezone.utcnow()
