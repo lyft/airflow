@@ -522,6 +522,22 @@ class DagFileProcessorManager(LoggingMixin):
 
             self.last_deactivate_stale_dags_time = timezone.utcnow()
 
+    def _print_file_list(self, title_string, files_list: List[str]):
+        if files_list:
+            file_list_str = ""
+            for file in files_list:
+                file_list_str += f"{file}\n"
+            log_str = (
+                "\n"
+                + "=" * 80
+                + "\n"
+                + f"{title_string}\n\n"
+                + file_list_str
+                + "\n"
+                + "=" * 80
+            )
+        self.log.debug(log_str)
+
     def _run_parsing_loop(self):
 
         # In sync mode we want timeout=None -- wait forever until a message is received
@@ -600,6 +616,7 @@ class DagFileProcessorManager(LoggingMixin):
             self.start_new_processes()
 
             # Update number of loop iteration.
+            self.log.debug(f"self._num_run {self._num_run}")
             self._num_run += 1
 
             if not self._async_mode:
@@ -613,6 +630,7 @@ class DagFileProcessorManager(LoggingMixin):
             # Collect anything else that has finished, but don't kick off any more processors
             self.collect_results()
 
+            self._print_file_list("File Queue", self._file_path_queue)
             self._print_stat()
 
             all_files_processed = all(self.get_last_finish_time(x) is not None for x in self.file_paths)
@@ -785,6 +803,7 @@ class DagFileProcessorManager(LoggingMixin):
         for file_path in known_file_paths:
             last_runtime = self.get_last_runtime(file_path)
             num_dags = self.get_last_dag_count(file_path)
+            run_count = self.get_run_count(file_path)
             num_errors = self.get_last_error_count(file_path)
             file_name = os.path.basename(file_path)
             file_name = os.path.splitext(file_name)[0].replace(os.sep, '.')
@@ -797,18 +816,19 @@ class DagFileProcessorManager(LoggingMixin):
                 seconds_ago = (now - last_run).total_seconds()
                 Stats.gauge(f'dag_processing.last_run.seconds_ago.{file_name}', seconds_ago)
 
-            rows.append((file_path, processor_pid, runtime, num_dags, num_errors, last_runtime, last_run))
+            rows.append((file_path, processor_pid, runtime, run_count, num_dags, num_errors, last_runtime, last_run))
 
         # Sort by longest last runtime. (Can't sort None values in python3)
         rows = sorted(rows, key=lambda x: x[3] or 0.0)
 
         formatted_rows = []
-        for file_path, pid, runtime, num_dags, num_errors, last_runtime, last_run in rows:
+        for file_path, pid, runtime, run_count, num_dags, num_errors, last_runtime, last_run in rows:
             formatted_rows.append(
                 (
                     file_path,
                     pid,
                     f"{runtime.total_seconds():.2f}s" if runtime else None,
+                    run_count,
                     num_dags,
                     num_errors,
                     f"{last_runtime:.2f}s" if last_runtime else None,
@@ -932,7 +952,7 @@ class DagFileProcessorManager(LoggingMixin):
             while not processor.done:
                 time.sleep(0.1)
 
-    def _collect_results_from_processor(self, processor) -> None:
+    def _collect_results_from_processor(self, processor) -> None:x
         self.log.debug("Processor for %s finished", processor.file_path)
         Stats.decr('dag_processing.processes')
         last_finish_time = timezone.utcnow()
@@ -1060,6 +1080,8 @@ class DagFileProcessorManager(LoggingMixin):
             file_path for file_path, stat in self._file_stats.items() if stat.run_count == self._max_runs
         ]
 
+        self._print_file_list("files_paths_at_run_limit", files_paths_at_run_limit)
+
         file_paths_to_exclude = set(file_paths_in_progress).union(
             file_paths_recently_processed, files_paths_at_run_limit
         )
@@ -1069,6 +1091,8 @@ class DagFileProcessorManager(LoggingMixin):
         files_paths_to_queue = [
             file_path for file_path in file_paths if file_path not in file_paths_to_exclude
         ]
+
+        self._print_file_list("files_paths_to_queue", files_paths_to_queue)
 
         for file_path, processor in self._processors.items():
             self.log.debug(
@@ -1086,6 +1110,8 @@ class DagFileProcessorManager(LoggingMixin):
                 )
 
         self._file_path_queue.extend(files_paths_to_queue)
+
+        self._print_file_list("self._file_path_queue after prepare_file_path_queue", self._file_path_queue)
 
     def _kill_timed_out_processors(self):
         """Kill any file processors that timeout to defend against process hangs."""

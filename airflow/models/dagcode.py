@@ -103,6 +103,7 @@ class DagCode(Base):
 
         existing_filelocs = {dag_code.fileloc for dag_code in existing_orm_dag_codes}
         missing_filelocs = filelocs.difference(existing_filelocs)
+        log.debug("writing DagCode for existing filelocs:(%s)", " ".join(existing_filelocs))
 
         for fileloc in missing_filelocs:
             orm_dag_code = DagCode(fileloc, cls._get_code_from_file(fileloc))
