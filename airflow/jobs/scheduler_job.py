@@ -914,6 +914,10 @@ class SchedulerJob(BaseJob):
             self._start_queued_dagruns(session)
             guard.commit()
             dag_runs = self._get_next_dagruns_to_examine(DagRunState.RUNNING, session)
+
+            # The number of dagruns to examine is limited by config value: max_dagruns_per_loop_to_schedule
+            Stats.gauge("scheduler.dagruns_to_examine", len(dag_runs))
+
             # Bulk fetch the currently active dag runs for the dags we are
             # examining, rather than making one query per DagRun
 
