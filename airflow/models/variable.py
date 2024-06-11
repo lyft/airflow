@@ -21,7 +21,6 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any
 
-from airflow.exceptions import AirflowFailException
 from sqlalchemy import Boolean, Column, Integer, String, Text, delete, select
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import declared_attr, reconstructor, synonym
@@ -170,7 +169,6 @@ class Variable(Base, LoggingMixin):
         :param description: Description of the Variable
         :param serialize_json: Serialize the value to a JSON string
         """
-
         # check if the secret exists in the custom secrets' backend.
         Variable.check_for_write_conflict(key)
         if serialize_json:

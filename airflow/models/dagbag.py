@@ -135,7 +135,7 @@ class DagBag(LoggingMixin):
 
         dag_folder = dag_folder or settings.DAGS_FOLDER
         self.dag_folder = dag_folder
-        
+        # Lyft-specific patch
         # Set is_tars and is_kyte rather than import from lyft_etl to avoid any circular import errors.
         self.is_tars = "tars" in os.environ.get("SERVICE", "")
         self.is_kyte = "kyte" in os.environ.get("SERVICE", "")
@@ -453,7 +453,7 @@ class DagBag(LoggingMixin):
 
         for dag, mod in top_level_dags:
             dag.fileloc = mod.__file__
-            
+            # Lyft-specific patch
             # When in production, restrict the DagBag to the appropriate set of DAGs.
             if self.service_instance == "production" and not self.is_kyte and not self.is_tars:
 

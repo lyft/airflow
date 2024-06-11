@@ -199,6 +199,7 @@ def _find_path_from_directory(
     base_dir_path: str | os.PathLike[str],
     ignore_file_name: str,
     ignore_rule_type: type[_IgnoreRule],
+    # Lyft-specific patch
     include_file_name: str = ".airflowinclude",
 ) -> Generator[str, None, None]:
     """Recursively search the base path and return the list of file paths that should not be ignored.
@@ -211,7 +212,7 @@ def _find_path_from_directory(
 
     :return: a generator of file paths which should not be ignored.
     """
-    
+    # Lyft-specific patch
     include_file_path = Path(base_dir_path) / include_file_name
     if include_file_path.is_file():
         with open(include_file_path) as ifile:

@@ -459,6 +459,7 @@ class DAG(LoggingMixin):
         end_date: datetime | None = None,
         full_filepath: str | None = None,
         template_searchpath: str | Iterable[str] | None = None,
+        # Lyft-specific patch
         # TODO after resolving unset template variables usage, set this back to jinja2.StrictUndefined
         template_undefined: type[jinja2.Undefined] = jinja2.Undefined,
         user_defined_macros: dict | None = None,
@@ -2722,6 +2723,7 @@ class DAG(LoggingMixin):
         if (
             task_id in self.task_dict and self.task_dict[task_id] is not task
         ) or task_id in self._task_group.used_group_ids:
+            # Lyft-specific patch
             # TODO revert this after Airflow 2.0 upgrade is stable - over-written tasks are a data quality issue
             warnings.warn(
                 'The requested task could not be added to the DAG with dag_id {} because a '

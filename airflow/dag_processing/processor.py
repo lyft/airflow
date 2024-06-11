@@ -571,7 +571,8 @@ class DagFileProcessor(LoggingMixin):
                     elif isinstance(task.email, (list, tuple)):
                         emails.update(task.email)
                         
-             # Do not send Emails to Pagerduty to avoid double Page creation
+            # Lyft-specific patch 
+            # Do not send Emails to Pagerduty to avoid double Page creation
             if dag.sla_miss_callback:
                 emails = {email for email in emails if not email.endswith('@lyft.pagerduty.com')}
 

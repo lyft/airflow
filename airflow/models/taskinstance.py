@@ -2513,6 +2513,7 @@ class TaskInstance(Base, LoggingMixin):
                 self._handle_reschedule(actual_start_date, reschedule_exception, test_mode, session=session)
                 session.commit()
                 return None
+            # Lyft-specific patch
             except (AirflowFailException) as e:
                 # If AirflowFailException is raised, task should not retry.
                 # If a sensor in reschedule mode reaches timeout, task should not retry.

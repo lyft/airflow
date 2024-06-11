@@ -168,6 +168,7 @@ class TaskGroup(DAGNode):
         # Example : task_group ==> task_group__1 -> task_group__2 -> task_group__3
         if self._group_id in self.used_group_ids:
             if not add_suffix_on_collision:
+                # Lyft-specific patch
                 # TODO revert this after Airflow 2.0 upgrade is stable - over-written tasks are a data quality issue
                 warnings.warn(f"group_id '{self.group_id}' has already been added to the DAG",
                               category=PendingDeprecationWarning)
@@ -232,6 +233,7 @@ class TaskGroup(DAGNode):
 
         if key in self.children:
             node_type = "Task" if hasattr(task, "task_id") else "Task Group"
+            # Lyft-specific patch
             # TODO revert this after Airflow 2.0 upgrade is stable - over-written tasks are a data quality issue
             warnings.warn(
                 'The requested task could not be added to the DAG because a '
