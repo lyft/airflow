@@ -2513,7 +2513,7 @@ class TaskInstance(Base, LoggingMixin):
                 self._handle_reschedule(actual_start_date, reschedule_exception, test_mode, session=session)
                 session.commit()
                 return None
-            except (AirflowFailException, AirflowSensorTimeout) as e:
+            except (AirflowFailException) as e:
                 # If AirflowFailException is raised, task should not retry.
                 # If a sensor in reschedule mode reaches timeout, task should not retry.
                 self.handle_failure(e, test_mode, context, force_fail=True, session=session)

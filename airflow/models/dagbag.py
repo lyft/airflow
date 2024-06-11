@@ -135,6 +135,16 @@ class DagBag(LoggingMixin):
 
         dag_folder = dag_folder or settings.DAGS_FOLDER
         self.dag_folder = dag_folder
+        
+        # Set is_tars and is_kyte rather than import from lyft_etl to avoid any circular import errors.
+        self.is_tars = "tars" in os.environ.get("SERVICE", "")
+        self.is_kyte = "kyte" in os.environ.get("SERVICE", "")
+
+        if self.service_instance == "production" and not self.is_tars and not self.is_kyte:
+
+            from airflowinfra.multi_cluster_utils import get_cluster_id_from_env
+            self.cluster_id = get_cluster_id_from_env()
+
         self.dags: dict[str, DAG] = {}
         # the file's last modified timestamp when we last read it
         self.file_last_changed: dict[str, datetime] = {}
@@ -443,6 +453,22 @@ class DagBag(LoggingMixin):
 
         for dag, mod in top_level_dags:
             dag.fileloc = mod.__file__
+            
+            # When in production, restrict the DagBag to the appropriate set of DAGs.
+            if self.service_instance == "production" and not self.is_kyte and not self.is_tars:
+
+                from airflowinfra.multi_cluster_utils import include_dag_in_dag_bag
+
+                dag_id = dag.dag_id
+                dag_fileloc = dag.fileloc
+
+                if not include_dag_in_dag_bag(
+                    cluster_id=self.cluster_id,
+                    dag_id=dag_id,
+                    dag_fileloc = dag.fileloc,
+                ):  
+                    continue
+
             try:
                 dag.validate()
                 self.bag_dag(dag=dag, root_dag=dag)

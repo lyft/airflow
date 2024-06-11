@@ -21,6 +21,7 @@ import json
 import logging
 from typing import TYPE_CHECKING, Any
 
+from airflow.exceptions import AirflowFailException
 from sqlalchemy import Boolean, Column, Integer, String, Text, delete, select
 from sqlalchemy.dialects.mysql import MEDIUMTEXT
 from sqlalchemy.orm import declared_attr, reconstructor, synonym
@@ -159,6 +160,7 @@ class Variable(Base, LoggingMixin):
         description: str | None = None,
         serialize_json: bool = False,
         session: Session = None,
+        is_multi_cluster_enabled: bool = False,
     ) -> None:
         """Set a value for an Airflow Variable with a given Key.
 
@@ -168,7 +170,11 @@ class Variable(Base, LoggingMixin):
         :param value: Value to set for the Variable
         :param description: Description of the Variable
         :param serialize_json: Serialize the value to a JSON string
+        :param is_multi_cluster_enabled: is set wrapped by lyft-etl sync_variable_writes_multicluster
         """
+        if not is_multi_cluster_enabled:
+            raise AirflowFailException("Please write Airflow variables using "
+                                       "sync_variable_writes_multicluster defined in lyft-etl")
         # check if the secret exists in the custom secrets' backend.
         Variable.check_for_write_conflict(key)
         if serialize_json:

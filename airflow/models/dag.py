@@ -459,7 +459,8 @@ class DAG(LoggingMixin):
         end_date: datetime | None = None,
         full_filepath: str | None = None,
         template_searchpath: str | Iterable[str] | None = None,
-        template_undefined: type[jinja2.StrictUndefined] = jinja2.StrictUndefined,
+        # TODO after resolving unset template variables usage, set this back to jinja2.StrictUndefined
+        template_undefined: type[jinja2.Undefined] = jinja2.Undefined,
         user_defined_macros: dict | None = None,
         user_defined_filters: dict | None = None,
         default_args: dict | None = None,
@@ -2721,7 +2722,13 @@ class DAG(LoggingMixin):
         if (
             task_id in self.task_dict and self.task_dict[task_id] is not task
         ) or task_id in self._task_group.used_group_ids:
-            raise DuplicateTaskIdFound(f"Task id '{task_id}' has already been added to the DAG")
+            # TODO revert this after Airflow 2.0 upgrade is stable - over-written tasks are a data quality issue
+            warnings.warn(
+                'The requested task could not be added to the DAG with dag_id {} because a '
+                'task with task_id {} is already in the DAG. This is not supported'
+                'behavior as overwritten tasks enables unexpected behavior from DAG definition to creation.'
+                'This will cause an exception once this patch is removed.'.format(self.dag_id, task.task_id),
+                category=PendingDeprecationWarning)
         else:
             self.task_dict[task_id] = task
             task.dag = self
