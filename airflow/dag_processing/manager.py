@@ -789,6 +789,10 @@ class DagFileProcessorManager(LoggingMixin):
         if 0 < self.print_stats_interval < time.monotonic() - self.last_stat_print_time:
             if self._file_paths:
                 self._log_file_processing_stats(self._file_paths)
+                
+            # Lyft-specific patch
+            # https://jira.lyft.net/browse/DATAOR-1099
+            Stats.gauge('dag_processing.file_path_queue_length', len(self._file_path_queue))
             self.last_stat_print_time = time.monotonic()
 
     @staticmethod
