@@ -36,7 +36,7 @@
 #                        much smaller.
 #
 # Use the same builder frontend version for everyone
-ARG AIRFLOW_EXTRAS="aiobotocore,amazon,async,celery,cncf-kubernetes,common-io,docker,elasticsearch,fab,ftp,google,google-auth,graphviz,grpc,hashicorp,http,ldap,microsoft-azure,mysql,odbc,openlineage,pandas,postgres,redis,sendgrid,sftp,slack,snowflake,ssh,statsd,uv,virtualenv"
+ARG AIRFLOW_EXTRAS="aiobotocore,amazon,async,celery,cncf-kubernetes,common-io,docker,elasticsearch,fab,ftp,google,google-auth,graphviz,grpc,http,odbc,pandas,postgres,redis,sftp,slack,ssh,statsd,uv,virtualenv"
 ARG ADDITIONAL_AIRFLOW_EXTRAS=""
 ARG ADDITIONAL_PYTHON_DEPS=""
 
@@ -63,8 +63,8 @@ ARG AIRFLOW_IMAGE_README_URL="https://raw.githubusercontent.com/apache/airflow/m
 # However, in case of breeze/development use we use latest sources and we override those
 # SOURCES_FROM/TO with "." and "/opt/airflow" respectively - so that sources of Airflow (and all providers)
 # are used to build the PROD image used in tests.
-ARG AIRFLOW_SOURCES_FROM="Dockerfile"
-ARG AIRFLOW_SOURCES_TO="/Dockerfile"
+ARG AIRFLOW_SOURCES_FROM="."
+ARG AIRFLOW_SOURCES_TO="/opt/airflow"
 
 # By default latest released version of airflow is installed (when empty) but this value can be overridden
 # and we can install version according to specification (For example ==2.0.2 or <3.0.0).
@@ -1429,9 +1429,9 @@ ENV DEV_APT_DEPS=${DEV_APT_DEPS} \
 COPY --from=scripts install_os_dependencies.sh /scripts/docker/
 RUN bash /scripts/docker/install_os_dependencies.sh dev
 
-ARG INSTALL_MYSQL_CLIENT="true"
+ARG INSTALL_MYSQL_CLIENT="false"
 ARG INSTALL_MYSQL_CLIENT_TYPE="mariadb"
-ARG INSTALL_MSSQL_CLIENT="true"
+ARG INSTALL_MSSQL_CLIENT="false"
 ARG INSTALL_POSTGRES_CLIENT="true"
 
 ENV INSTALL_MYSQL_CLIENT=${INSTALL_MYSQL_CLIENT} \
@@ -1474,7 +1474,7 @@ ARG CONSTRAINTS_GITHUB_REPOSITORY="apache/airflow"
 ARG AIRFLOW_CONSTRAINTS_MODE="constraints"
 ARG AIRFLOW_CONSTRAINTS_REFERENCE=""
 ARG AIRFLOW_CONSTRAINTS_LOCATION=""
-ARG DEFAULT_CONSTRAINTS_BRANCH="constraints-main"
+ARG DEFAULT_CONSTRAINTS_BRANCH="constraints-2.9.2"
 
 # By default PIP has progress bar but you can disable it.
 ARG PIP_PROGRESS_BAR
@@ -1491,11 +1491,11 @@ ARG AIRFLOW_VERSION_SPECIFICATION
 # Of Airflow. Note That for local source installation you need to have local sources of
 # Airflow checked out together with the Dockerfile and AIRFLOW_SOURCES_FROM and AIRFLOW_SOURCES_TO
 # set to "." and "/opt/airflow" respectively.
-ARG AIRFLOW_INSTALLATION_METHOD="apache-airflow"
+ARG AIRFLOW_INSTALLATION_METHOD="."
 # By default we do not upgrade to latest dependencies
 ARG UPGRADE_INVALIDATION_STRING=""
-ARG AIRFLOW_SOURCES_FROM
-ARG AIRFLOW_SOURCES_TO
+ARG AIRFLOW_SOURCES_FROM="."
+ARG AIRFLOW_SOURCES_TO="/opt/airflow"
 
 
 RUN if [[ -f /docker-context-files/pip.conf ]]; then \
@@ -1631,6 +1631,7 @@ RUN --mount=type=cache,id=additional-requirements-$PYTHON_BASE_IMAGE-$AIRFLOW_PI
     if [[ -f /docker-context-files/requirements.txt ]]; then \
         pip install -r /docker-context-files/requirements.txt; \
     fi
+RUN ls -la /
 
 ##############################################################################################
 # This is the actual Airflow image - much smaller than the build one. We copy
@@ -1662,9 +1663,9 @@ ARG ADDITIONAL_RUNTIME_APT_DEPS=""
 ARG RUNTIME_APT_COMMAND="echo"
 ARG ADDITIONAL_RUNTIME_APT_COMMAND=""
 ARG ADDITIONAL_RUNTIME_APT_ENV=""
-ARG INSTALL_MYSQL_CLIENT="true"
+ARG INSTALL_MYSQL_CLIENT="false"
 ARG INSTALL_MYSQL_CLIENT_TYPE="mariadb"
-ARG INSTALL_MSSQL_CLIENT="true"
+ARG INSTALL_MSSQL_CLIENT="false"
 ARG INSTALL_POSTGRES_CLIENT="true"
 
 ENV RUNTIME_APT_DEPS=${RUNTIME_APT_DEPS} \
@@ -1683,7 +1684,7 @@ RUN bash /scripts/docker/install_os_dependencies.sh runtime
 
 # Having the variable in final image allows to disable providers manager warnings when
 # production image is prepared from sources rather than from package
-ARG AIRFLOW_INSTALLATION_METHOD="apache-airflow"
+ARG AIRFLOW_INSTALLATION_METHOD="apache_airflow" 
 ARG AIRFLOW_IMAGE_REPOSITORY
 ARG AIRFLOW_IMAGE_README_URL
 ARG AIRFLOW_USER_HOME_DIR
@@ -1705,9 +1706,7 @@ COPY --from=scripts install_mysql.sh install_mssql.sh install_postgres.sh /scrip
 # unexpected result - the cache for Dockerfiles might get invalidated in case the host system
 # had different umask set and group x bit was not set. In Azure the bit might be not set at all.
 # That also protects against AUFS Docker backend problem where changing the executable bit required sync
-RUN bash /scripts/docker/install_mysql.sh prod \
-    && bash /scripts/docker/install_mssql.sh prod \
-    && bash /scripts/docker/install_postgres.sh prod \
+RUN bash /scripts/docker/install_postgres.sh prod \
     && adduser --gecos "First Last,RoomNumber,WorkPhone,HomePhone" --disabled-password \
            --quiet "airflow" --uid "${AIRFLOW_UID}" --gid "0" --home "${AIRFLOW_USER_HOME_DIR}" \
 # Make Airflow files belong to the root group and are accessible. This is to accommodate the guidelines from

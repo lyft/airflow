@@ -212,6 +212,8 @@ def check_docker_version(quiet: bool = False):
             )
             sys.exit(1)
         else:
+            # Remove -rd suffix from docker version (Rancher Desktop uses this 24.0.7-rd)
+            docker_version = re.sub(r"-rd$", "", docker_version)
             good_version = compare_version(docker_version, MIN_DOCKER_VERSION)
             if good_version:
                 if not quiet:

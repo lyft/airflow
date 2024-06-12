@@ -139,6 +139,8 @@ class DagBag(LoggingMixin):
         # Set is_tars and is_kyte rather than import from lyft_etl to avoid any circular import errors.
         self.is_tars = "tars" in os.environ.get("SERVICE", "")
         self.is_kyte = "kyte" in os.environ.get("SERVICE", "")
+        
+        self.service_instance = os.environ.get('SERVICE_INSTANCE', '').lower()
 
         if self.service_instance == "production" and not self.is_tars and not self.is_kyte:
 
