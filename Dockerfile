@@ -45,13 +45,13 @@ ARG AIRFLOW_UID="50000"
 ARG AIRFLOW_USER_HOME_DIR=/home/airflow
 
 # latest released version here
-ARG AIRFLOW_VERSION="2.9.0"
+ARG AIRFLOW_VERSION="2.9.2"
 
-ARG PYTHON_BASE_IMAGE="python:3.8-slim-bookworm"
+ARG PYTHON_BASE_IMAGE="python:3.10-slim-bookworm"
 
 ARG AIRFLOW_PIP_VERSION=24.0
 ARG AIRFLOW_UV_VERSION=0.2.2
-ARG AIRFLOW_USE_UV="false"
+ARG AIRFLOW_USE_UV="true"
 ARG UV_HTTP_TIMEOUT="300"
 ARG AIRFLOW_IMAGE_REPOSITORY="https://github.com/apache/airflow"
 ARG AIRFLOW_IMAGE_README_URL="https://raw.githubusercontent.com/apache/airflow/main/docs/docker-stack/README.md"
