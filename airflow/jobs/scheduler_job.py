@@ -518,6 +518,9 @@ class SchedulerJob(BaseJob):
             )
 
         for ti in executable_tis:
+            # Handles the following states:
+            # - QUEUED
+            ti.call_state_change_callback()
             make_transient(ti)
         return executable_tis
 

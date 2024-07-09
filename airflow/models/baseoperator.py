@@ -216,6 +216,7 @@ def partial(
     on_failure_callback: Optional[TaskStateChangeCallback] = None,
     on_success_callback: Optional[TaskStateChangeCallback] = None,
     on_retry_callback: Optional[TaskStateChangeCallback] = None,
+    on_state_change_callback: Optional[TaskStateChangeCallback] = None,
     run_as_user: Optional[str] = None,
     executor_config: Optional[Dict] = None,
     inlets: Optional[Any] = None,
@@ -276,6 +277,7 @@ def partial(
     partial_kwargs.setdefault("on_failure_callback", on_failure_callback)
     partial_kwargs.setdefault("on_retry_callback", on_retry_callback)
     partial_kwargs.setdefault("on_success_callback", on_success_callback)
+    partial_kwargs.setdefault("on_state_change_callback", on_state_change_callback)
     partial_kwargs.setdefault("run_as_user", run_as_user)
     partial_kwargs.setdefault("executor_config", executor_config)
     partial_kwargs.setdefault("inlets", inlets)
@@ -564,6 +566,8 @@ class BaseOperator(AbstractOperator, metaclass=BaseOperatorMeta):
         that it is executed when retries occur.
     :param on_success_callback: much like the ``on_failure_callback`` except
         that it is executed when the task succeeds.
+    :param on_state_change_callback: much like the ``on_failure_callback`` except
+        that it is executed when the task state is changed.
     :param pre_execute: a function to be called immediately before task
         execution, receiving a context dictionary; raising an exception will
         prevent the task from being executed.
@@ -667,6 +671,7 @@ class BaseOperator(AbstractOperator, metaclass=BaseOperatorMeta):
         'on_failure_callback',
         'on_success_callback',
         'on_retry_callback',
+        'on_state_change_callback',
         'do_xcom_push',
     }
 
@@ -730,6 +735,7 @@ class BaseOperator(AbstractOperator, metaclass=BaseOperatorMeta):
         on_failure_callback: Optional[TaskStateChangeCallback] = None,
         on_success_callback: Optional[TaskStateChangeCallback] = None,
         on_retry_callback: Optional[TaskStateChangeCallback] = None,
+        on_state_change_callback: Optional[TaskStateChangeCallback] = None,
         pre_execute: Optional[TaskPreExecuteHook] = None,
         post_execute: Optional[TaskPostExecuteHook] = None,
         trigger_rule: str = DEFAULT_TRIGGER_RULE,
@@ -793,6 +799,7 @@ class BaseOperator(AbstractOperator, metaclass=BaseOperatorMeta):
         self.on_failure_callback = on_failure_callback
         self.on_success_callback = on_success_callback
         self.on_retry_callback = on_retry_callback
+        self.on_state_change_callback = on_state_change_callback
         self._pre_execute_hook = pre_execute
         self._post_execute_hook = post_execute
 

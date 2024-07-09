@@ -954,6 +954,11 @@ class DagRun(Base, LoggingMixin):
                     Stats.incr(f"task_restored_to_dag.{dag.dag_id}", 1, 1)
                     existing_indexes[task].append(ti.map_index)
                     expected_indexes[task] = range(total_length)
+                    
+            # Handles the following states:
+            # - REMOVED
+            # - None
+            ti.call_state_change_callback()
         # Check if we have some missing indexes to create ti for
         missing_indexes: Dict["MappedOperator", Sequence[int]] = defaultdict(list)
         for k, v in existing_indexes.items():
@@ -1208,6 +1213,11 @@ class DagRun(Base, LoggingMixin):
                 )
                 .update({TI.state: State.SCHEDULED}, synchronize_session=False)
             )
+            
+            # Handles the following state
+            # - SCHEDULED
+            for ti in schedulable_tis:
+                ti.call_state_change_callback()
 
         # Tasks using EmptyOperator should not be executed, mark them as success
         if dummy_ti_ids:

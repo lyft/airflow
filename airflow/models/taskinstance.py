@@ -219,6 +219,9 @@ def clear_task_instances(
                 # the task is terminated and becomes eligible for retry.
                 ti.state = TaskInstanceState.RESTARTING
                 job_ids.append(ti.job_id)
+                # Handles the following state
+                # - RESTARTING
+                ti.call_state_change_callback()
         else:
             task_id = ti.task_id
             if dag and dag.has_task(task_id):
@@ -272,6 +275,7 @@ def clear_task_instances(
 
         delete_qry = TR.__table__.delete().where(conditions)
         session.execute(delete_qry)
+        
 
     if job_ids:
         from airflow.jobs.base_job import BaseJob
@@ -987,6 +991,11 @@ class TaskInstance(Base, LoggingMixin):
             self.end_date = self.end_date or current_time
             self.duration = (self.end_date - self.start_date).total_seconds()
         session.merge(self)
+        # Handles the following states:
+        # - UPSTREAM_FAILED 
+        # - SKIPPED
+        # - FAILED
+        self.call_state_change_callback()
 
     @property
     def is_premature(self):
@@ -1350,6 +1359,9 @@ class TaskInstance(Base, LoggingMixin):
                 task_reschedule: TR = TR.query_for_task_instance(self, session=session).first()
                 if task_reschedule:
                     self.start_date = task_reschedule.start_date
+                # Handles the following states
+                # - UP_FOR_RESCHEDULE
+                self.call_state_change_callback()
 
             # Secondly we find non-runnable but requeueable tis. We reset its state.
             # This is because we might have hit concurrency limits,
@@ -1391,6 +1403,9 @@ class TaskInstance(Base, LoggingMixin):
         if not test_mode:
             session.merge(self).task = task
         session.commit()
+        # Handles state
+        # - RUNNING
+        self.call_state_change_callback()
 
         # Closing all pooled connections to prevent
         # "max number of connections reached"
@@ -1635,6 +1650,9 @@ class TaskInstance(Base, LoggingMixin):
         self.start_date = timezone.utcnow()
         session.merge(self)
         session.commit()
+        # Handles the following states:
+        # - SENSING
+        self.call_state_change_callback()
         # Raise exception for sensing state
         raise AirflowSmartSensorException("Task successfully registered in smart sensor.")
 
@@ -1730,6 +1748,9 @@ class TaskInstance(Base, LoggingMixin):
                 self.trigger_timeout = min(self.start_date + execution_timeout, self.trigger_timeout)
             else:
                 self.trigger_timeout = self.start_date + execution_timeout
+        # Handles the following states:
+        # - DEFERRED
+        self.call_state_change_callback()
 
     def _run_execute_callback(self, context: Context, task):
         """Functions that need to be run before a Task is executed"""
@@ -1772,6 +1793,11 @@ class TaskInstance(Base, LoggingMixin):
                     task.on_retry_callback(context)
                 except Exception:
                     self.log.exception("Error when executing on_retry_callback")
+        # Handles the following states:
+        # - SUCCESS
+        # - UP_FOR_RETRY
+        # - FAILED
+        self.call_state_change_callback()
 
     @provide_session
     def run(
@@ -2604,7 +2630,21 @@ class TaskInstance(Base, LoggingMixin):
         if len(filters) == 1:
             return filters[0]
         return or_(*filters)
-
+    
+    
+    @classmethod
+    def call_state_change_callback(self):
+        self.log.info("State changed for DAG: %s, Task: %s, to state: %s", self.dag_id, self.task_id, self.state)
+        task = self.task
+        if task.on_state_change_callback is not None:
+            # Ensure the state and timestamps are up-to-date
+            self.refresh_from_db()
+            context = self.get_template_context()
+            try:
+                task.on_state_change_callback(context)
+            except Exception:
+                self.log.exception("Error when executing on_state_change_callback")
+            
 
 # State of the task instance.
 # Stores string version of the task state.
