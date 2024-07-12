@@ -517,8 +517,13 @@ class SchedulerJob(BaseJob):
                 synchronize_session=False,
             )
 
-        for ti in executable_tis:
-            make_transient(ti)
+            self.log.info("CallingCB for [%s] TIs", len(executable_tis))
+            for ti in executable_tis:
+                self.log.info("TI_CB: %s", ti.call_state_change_callback)
+                # Handles the following states:
+                # - QUEUED
+                ti.call_state_change_callback(state=TaskInstanceState.QUEUED)
+                make_transient(ti)
         return executable_tis
 
     @provide_session
