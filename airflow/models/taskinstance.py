@@ -995,7 +995,7 @@ class TaskInstance(Base, LoggingMixin):
         # - UPSTREAM_FAILED 
         # - SKIPPED
         # - FAILED
-        self.call_state_change_callback()
+        self.call_state_change_callback(state)
 
     @property
     def is_premature(self):
@@ -2630,20 +2630,33 @@ class TaskInstance(Base, LoggingMixin):
         if len(filters) == 1:
             return filters[0]
         return or_(*filters)
-    
-    
-    @classmethod
-    def call_state_change_callback(self):
+
+    # 'state' will be taken from the TaskInstance if not given.
+    # In some cases the task state is not updated in the TaskInstance, only in the metastore,
+    # to avoid querying the meta store on state change, we can just send the state the
+    # task should be on and call the callback with the correct state.
+    def call_state_change_callback(self, state=None):
+        self.log.info("==================call_state_change_callback[%s, %s]============", state, self.state)
         self.log.info("State changed for DAG: %s, Task: %s, to state: %s", self.dag_id, self.task_id, self.state)
-        task = self.task
-        if task.on_state_change_callback is not None:
-            # Ensure the state and timestamps are up-to-date
-            self.refresh_from_db()
-            context = self.get_template_context()
-            try:
-                task.on_state_change_callback(context)
-            except Exception:
-                self.log.exception("Error when executing on_state_change_callback")
+        if hasattr(self, 'task'):
+            self.log.info("TASK: %s",self.task)
+            self.log.info("TASK_on_state_change_callback: %s",self.task.on_state_change_callback)
+            # Update state in current instance, for cases where the state is only updated in DB
+            # This to avoid querying the DB to get the latest state
+            if state:
+                self.state = state
+                
+            task = self.task
+            if task.on_state_change_callback is not None:
+                # Ensure the state and timestamps are up-to-date
+                # self.refresh_from_db()
+                context = self.get_template_context()
+                try:
+                    task.on_state_change_callback(context)
+                except Exception:
+                    self.log.exception("Error when executing on_state_change_callback")
+        else:
+            self.log.info("Couldn't get self.task object!")
             
 
 # State of the task instance.

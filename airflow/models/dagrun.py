@@ -1217,7 +1217,7 @@ class DagRun(Base, LoggingMixin):
             # Handles the following state
             # - SCHEDULED
             for ti in schedulable_tis:
-                ti.call_state_change_callback()
+                ti.call_state_change_callback(state=TaskInstanceState.SCHEDULED)
 
         # Tasks using EmptyOperator should not be executed, mark them as success
         if dummy_ti_ids:
