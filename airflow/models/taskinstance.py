@@ -2636,27 +2636,41 @@ class TaskInstance(Base, LoggingMixin):
     # to avoid querying the meta store on state change, we can just send the state the
     # task should be on and call the callback with the correct state.
     def call_state_change_callback(self, state=None):
-        self.log.info("==================call_state_change_callback[%s, %s]============", state, self.state)
-        self.log.info("State changed for DAG: %s, Task: %s, to state: %s", self.dag_id, self.task_id, self.state)
-        if hasattr(self, 'task'):
-            self.log.info("TASK: %s",self.task)
-            self.log.info("TASK_on_state_change_callback: %s",self.task.on_state_change_callback)
-            # Update state in current instance, for cases where the state is only updated in DB
-            # This to avoid querying the DB to get the latest state
-            if state:
-                self.state = state
-                
-            task = self.task
-            if task.on_state_change_callback is not None:
-                # Ensure the state and timestamps are up-to-date
-                # self.refresh_from_db()
-                context = self.get_template_context()
-                try:
-                    task.on_state_change_callback(context)
-                except Exception:
-                    self.log.exception("Error when executing on_state_change_callback")
-        else:
-            self.log.info("Couldn't get self.task object!")
+        try:
+            print("==================call_state_change_callback[%s, %s]============", state, self.state)
+            print("State changed for DAG: %s, Task: %s, to state: %s", self.dag_id, self.task_id, self.state)
+            print("1self:", self.__dict__)
+            if not hasattr(self, 'task'):
+                # self: {'_sa_instance_state': <sqlalchemy.orm.state.InstanceState object at 0x7f9e8abe2110>, 'dag_id': 'testing_logs', 'hostname': '', 'queued_dttm': datetime.datetime(2024, 8, 15, 22, 5, 9, 73142, tzinfo=Timezone('UTC')), 'next_method': None, 'run_id': 'scheduled__2024-08-15T22:00:00+00:00', 'unixname': 'root', 'queued_by_job_id': None, 'next_kwargs': None, 'map_index': -1, 'job_id': None, 'pid': None, 'start_date': None, 'pool': 'default_pool', 'executor_config': {}, 'end_date': None, 'pool_slots': 1, 'external_executor_id': None, '_try_number': 0, 'duration': None, 'queue': 'default', 'trigger_id': None, 'state': 'scheduled', 'priority_weight': 1, 'trigger_timeout': None, 'task_id': 'logging_from_presto_operator', 'max_tries': 1, 'operator': 'PrestoOperator', 'dag_run': <DagRun testing_logs @ 2024-08-15 22:00:00+00:00: scheduled__2024-08-15T22:00:00+00:00, state:running, queued_at: 2024-08-15 22:05:00.577436+00:00. externally triggered: False>, 'rendered_task_instance_fields': None, '_log': <Logger airflow.task (INFO)>, 'test_mode': False, 'dag_model': <DAG: testing_logs>}
+                # there is no self.task_instance
+                if not hasattr(self, 'task_instance'):
+                    if not hasattr(self, 'get_task_instance'):
+                        # Get task instance from DB
+                        self.task = TaskInstance.get_task_instance(self.dag_id, self.task_id, self.execution_date)
+                # self.task = self.task_instance.task
+               
+                print("2self:", self.__dict__)
+            if hasattr(self, 'task'):
+                print("TASK: %s",self.task)
+                print("TASK_on_state_change_callback: %s",self.task.on_state_change_callback)
+                # Update state in current instance, for cases where the state is only updated in DB
+                # This to avoid querying the DB to get the latest state
+                if state:
+                    self.state = state
+                    
+                task = self.task
+                if task.on_state_change_callback is not None:
+                    # Ensure the state and timestamps are up-to-date
+                    # self.refresh_from_db()
+                    context = self.get_template_context()
+                    try:
+                        task.on_state_change_callback(context)
+                    except Exception:
+                        self.log.exception("Error when executing on_state_change_callback")
+            else:
+                self.log.info("Couldn't get self.task object!")
+        except Exception as e:
+            log.error("Exception in call_state_change_callback: %s", e)
             
 
 # State of the task instance.

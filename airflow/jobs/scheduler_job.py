@@ -520,10 +520,14 @@ class SchedulerJob(BaseJob):
             self.log.info("CallingCB for [%s] TIs", len(executable_tis))
             for ti in executable_tis:
                 self.log.info("TI_CB: %s", ti.call_state_change_callback)
+                self.log.info("TI_CB Function name: %s", ti.call_state_change_callback.__name__)
+                self.log.info("TI_CB Function bound to instance: %s", ti.call_state_change_callback.__self__)
                 # Handles the following states:
                 # - QUEUED
                 ti.call_state_change_callback(state=TaskInstanceState.QUEUED)
+                self.log.info("Called already call_state_change_callback(state=QUEUED):\n\t")
                 make_transient(ti)
+
         return executable_tis
 
     @provide_session
