@@ -253,7 +253,7 @@ class SchedulerJob(BaseJob):
                 TI.dag_id,
                 func.count().label('current_active_tasks')
             )
-            .where(TI.state.in_(['running', 'queued']))
+            .where(TI.state.in_([TaskInstanceState.RUNNING, TaskInstanceState.QUEUED]))
             .group_by(TI.dag_id)
             .subquery()
         )
