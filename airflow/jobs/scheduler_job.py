@@ -28,7 +28,7 @@ from collections import defaultdict
 from datetime import timedelta
 from typing import Collection, DefaultDict, Dict, Iterator, List, Optional, Set, Tuple
 
-from sqlalchemy import func, not_, or_, text
+from sqlalchemy import func, not_, or_, text, select
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import load_only, selectinload
 from sqlalchemy.orm.session import Session, make_transient
@@ -249,19 +249,19 @@ class SchedulerJob(BaseJob):
         and no more tasks can be queued for them.
         """
         dag_task_counts = (
-            session.query(
+            select(
                 TI.dag_id,
                 func.count().label('current_active_tasks')
             )
-            .filter(TI.state.in_(['running', 'queued']))
+            .where(TI.state.in_(['running', 'queued']))
             .group_by(TI.dag_id)
             .subquery()
         )
 
         starved_dags_query = (
-            session.query(dag_task_counts.c.dag_id)
+            select(dag_task_counts.c.dag_id)
             .join(DM, dag_task_counts.c.dag_id == DM.dag_id)
-            .filter(dag_task_counts.c.current_active_tasks >= DM.max_active_tasks)
+            .where(dag_task_counts.c.current_active_tasks >= DM.max_active_tasks)
         )
 
         result = session.execute(starved_dags_query)
