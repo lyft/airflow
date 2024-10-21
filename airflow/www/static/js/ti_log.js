@@ -140,7 +140,7 @@ function autoTailingLog(tryNumber, metadata = null, autoTailing = false) {
     }
     recurse().then(() => autoTailingLog(tryNumber, res.metadata, autoTailing));
   }).catch((error) => {
-    console.error(`Error while retrieving log: ${error}`);
+    console.error(`Error while retrieving log`, error);
 
     const externalLogUrl = getMetaValue('external_log_url');
     const fullExternalUrl = `${externalLogUrl
@@ -151,7 +151,7 @@ function autoTailingLog(tryNumber, metadata = null, autoTailing = false) {
 
     document.getElementById(`loading-${tryNumber}`).style.display = 'none';
 
-    const logBlockElementId = `try-${tryNumber}-${item[0]}`;
+    const logBlockElementId = `try-${tryNumber}-error`;
     let logBlock = document.getElementById(logBlockElementId);
     if (!logBlock) {
       const logDivBlock = document.createElement('div');
@@ -164,6 +164,7 @@ function autoTailingLog(tryNumber, metadata = null, autoTailing = false) {
 
     logBlock.innerHTML += "There was an error while retrieving the log from S3. Please use Kibana to view the logs.";
     logBlock.innerHTML += `<a href="${fullExternalUrl}" target="_blank">View logs in Kibana</a>`;
+
   });
 }
 
